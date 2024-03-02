@@ -1,4 +1,5 @@
 const Goal = require("../models/Goal")
+const {getTime} = require("./timeService");
 
 
 const getAllGoalByChatId = async (chatId) => {
@@ -13,7 +14,7 @@ const addGoal = async (name, chatId, clientId) => {
         name,
         chatId,
         createdBY: clientId,
-        createdTime: new Date(),
+        createdTime: getTime(),
     });
     return newGoal.save();
 }

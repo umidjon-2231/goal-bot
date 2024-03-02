@@ -1,4 +1,5 @@
 const Client = require("../models/Client")
+const {getTime} = require("./timeService");
 
 
 const existById = async (chatId) => {
@@ -14,7 +15,7 @@ const addClient = async ({chatId, fullName, username}) => {
         chatId,
         fullName,
         username,
-        registerTime: new Date()
+        registerTime: getTime()
     });
     return newClient.save()
 }

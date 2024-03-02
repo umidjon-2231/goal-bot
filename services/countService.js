@@ -2,6 +2,7 @@ const goalService = require("./goalService");
 const clientService = require("./clientService");
 const Count = require("../models/Count")
 const Goal = require("../models/Goal")
+const {getTime} = require("./timeService");
 
 
 const addCount = async (goalId, fromId, amount = 0) => {
@@ -20,7 +21,7 @@ const addCount = async (goalId, fromId, amount = 0) => {
         goal: goal._id,
         client: client._id,
         amount,
-        createdTime: new Date()
+        createdTime: getTime()
     });
     return newCount.save();
 }
@@ -30,12 +31,10 @@ const getTotalCountByClientId = async (goalId, chatId) => {
     if (!goal) {
         throw new Error("Goal not found")
     }
-    console.log("Get goal", new Date().getTime())
     let client = await clientService.getClientByChatId(chatId);
     if (!client) {
         throw new Error("Not registered")
     }
-    console.log("Get client", new Date().getTime())
     let count = await Count.aggregate([
         {
             $match: {goal: goal._id, client: client._id},
@@ -48,7 +47,6 @@ const getTotalCountByClientId = async (goalId, chatId) => {
             }
         }]);
 
-    console.log("Get counts", new Date().getTime())
     return count[0]?.totalAmount ?? 0;
 }
 

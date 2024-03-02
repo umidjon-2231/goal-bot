@@ -60,17 +60,21 @@ bot.on("callback_query", async (query) => {
 bot.onText(/\/start/, async (msg) => {
     try {
         let chatId = msg.chat.id;
-        let existById = await clientService.existByChatId(chatId);
-        if (!existById) {
-            await clientService.addClient({
-                chatId,
-                fullName: msg.from.first_name,
-                username: msg.from.username,
-            })
-            await bot.sendMessage(chatId, `Hi ${msg.from.first_name}. Welcome to goal counter bot`)
-            return;
+        if (msg.chat.type === "private") {
+            let existById = await clientService.existByChatId(chatId);
+            if (!existById) {
+                await clientService.addClient({
+                    chatId,
+                    fullName: msg.from.first_name,
+                    username: msg.from.username,
+                })
+                await bot.sendMessage(chatId, `Hi ${msg.from.first_name}. Welcome to goal counter bot`)
+                return;
+            }
+            await bot.sendMessage(chatId, `Hi ${msg.from.first_name}. Nice to meet you again!`)
+        } else {
+            await bot.sendMessage(chatId, `Hello everyone!`)
         }
-        await bot.sendMessage(chatId, `Hi ${msg.from.first_name}. Nice to meet you again!`)
     } catch (e) {
         console.error(e)
     }
@@ -165,19 +169,21 @@ bot.onText(/\/count (.+) (\d+)/, async (msg, match) => {
 
 
 bot.onText(/\/statistics/, async (msg) => {
-    console.log("Start", new Date().getTime());
     try {
         let chatId = msg.chat.id;
         let goals = await goalService.getAllGoalByChatId(chatId);
-        console.log("Get all goals", new Date().getTime())
-        let result = 'Goal statistics:\n\n'
+        let from=msg.reply_to_message?msg.reply_to_message.from:msg.from;
+        if (goals.length === 0) {
+            await bot.sendMessage(chatId, "There no any goals!")
+            return;
+        }
+        let result = `Goal statistics of [${from.first_name}](tg://user?id=${from.id}):\n\n`
         for (let i = 0; i < goals.length; i++) {
             let goal = goals[i];
-            let totalCount = await countService.getTotalCountByClientId(goal._id, msg.from.id);
+            let totalCount = await countService.getTotalCountByClientId(goal._id, from.id);
             result += `${i + 1}. ${goal.name} - ${totalCount}\n`
         }
         await bot.sendMessage(chatId, result);
-        console.log("Finish", new Date().getTime());
     } catch (e) {
         console.error(e);
     }
