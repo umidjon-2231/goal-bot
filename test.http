@@ -1,0 +1,5 @@
+###
+GET https://api.telegram.org/bot{{token}}/setWebhook?url={{url}}{{token}}&allowed_updates=["callback_query", "message"]
+Accept: application/json
+
+###
