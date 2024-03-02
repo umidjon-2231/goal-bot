@@ -1,10 +1,9 @@
-const fns = require("date-fns")
-const {utcToZonedTime, zonedTimeToUtc} = require("date-fns-tz")
+const fnsTz = require("date-fns-tz")
 
 const getTime = () => {
-    let utcTime = zonedTimeToUtc(new Date(), Intl.DateTimeFormat().resolvedOptions().timeZone);
-    return utcToZonedTime(utcTime, "Asia/Tashkent")
+    let utcTime = fnsTz.zonedTimeToUtc(new Date(), Intl.DateTimeFormat().resolvedOptions().timeZone);
+    return fnsTz.utcToZonedTime(utcTime, "Asia/Tashkent")
 }
 
 
-module.exports={getTime}
+module.exports = {getTime}
