@@ -24,7 +24,7 @@ jobs:
       - name: Build
         uses: appleboy/ssh-action@master
         env:
-          PROJECT_PATH: ${{secrets.PROJECT_PATH}}/src/main/frontend/admin
+          PROJECT_PATH: ${{secrets.PROJECT_PATH}}/
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
