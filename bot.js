@@ -177,7 +177,7 @@ bot.onText(/\/statistics/, async (msg) => {
             await bot.sendMessage(chatId, "There no any goals!")
             return;
         }
-        let result = `Goal statistics of [${from.first_name}](tg://user?id=${from.id}):\n\n`
+        let result = `Goal statistics of [${from.first_name}](tg://user?id=${from.id}) for all time:\n\n`
         for (let i = 0; i < goals.length; i++) {
             let goal = goals[i];
             let totalCount = await countService.getTotalCountByClientId(goal._id, from.id);
