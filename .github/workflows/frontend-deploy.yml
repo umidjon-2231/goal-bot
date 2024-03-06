@@ -2,8 +2,6 @@ name: Build and host frontend
 on:
   push:
     branches: [ master ]
-    paths:
-      - ".github/workflows/frontend-deploy.yml"
 jobs:
   test:
     runs-on: ubuntu-22.04
