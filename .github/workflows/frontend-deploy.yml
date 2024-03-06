@@ -1,0 +1,60 @@
+name: Build and host frontend
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - ".github/workflows/frontend-deploy.yml"
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Setup Node js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Build Application
+        run: |
+          yarn
+  build:
+    runs-on: ubuntu-22.04
+    needs: test
+    steps:
+      - name: Build
+        uses: appleboy/ssh-action@master
+        env:
+          PROJECT_PATH: ${{secrets.PROJECT_PATH}}/src/main/frontend/admin
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: PROJECT_PATH
+          script: |
+            echo Locating path: "$PROJECT_PATH"
+            cd $PROJECT_PATH
+            git pull
+  run:
+    runs-on: ubuntu-22.04
+    needs: [ test, build ]
+    steps:
+      - name: Run application
+        uses: appleboy/ssh-action@master
+        env:
+          PROJECT_PATH: ${{ secrets.PROJECT_PATH }}/
+          NAME: ${{ secrets.FRONTEND_NAME }}
+          PORT: ${{ secrets.FRONTEND_PORT }}
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: PROJECT_PATH,NAME
+          script: |
+            echo Locating path: "$PROJECT_PATH"
+            cd $PROJECT_PATH
+            echo tmux session manage: "$NAME"
+            if tmux has-session -t $NAME; then
+              tmux kill-session -t $NAME
+            fi
+              tmux new-session -d -s $NAME
+            tmux send-keys "yarn && yarn start" C-m

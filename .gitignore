@@ -2,3 +2,4 @@
 http-client.private.env.json
 node_modules
 .vercel
+.env

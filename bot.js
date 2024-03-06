@@ -183,7 +183,9 @@ bot.onText(/\/statistics/, async (msg) => {
             let totalCount = await countService.getTotalCountByClientId(goal._id, from.id);
             result += `${i + 1}. ${goal.name} - ${totalCount}\n`
         }
-        await bot.sendMessage(chatId, result);
+        await bot.sendMessage(chatId, result, {
+            parse_mode: "Markdown",
+        });
     } catch (e) {
         console.error(e);
     }
