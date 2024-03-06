@@ -24,7 +24,7 @@ jobs:
       - name: Build
         uses: appleboy/ssh-action@master
         env:
-          PROJECT_PATH: ${{secrets.PROJECT_PATH}}/
+          PROJECT_PATH: ${{ secrets.PROJECT_PATH }}
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
@@ -41,9 +41,8 @@ jobs:
       - name: Run application
         uses: appleboy/ssh-action@master
         env:
-          PROJECT_PATH: ${{ secrets.PROJECT_PATH }}/
-          NAME: ${{ secrets.FRONTEND_NAME }}
-          PORT: ${{ secrets.FRONTEND_PORT }}
+          PROJECT_PATH: ${{ secrets.PROJECT_PATH }}
+          NAME: ${{ secrets.NAME }}
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
