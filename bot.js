@@ -2,6 +2,7 @@ const TelegramBot = require("node-telegram-bot-api");
 const clientService = require("./services/clientService");
 const goalService = require("./services/goalService");
 const countService = require("./services/countService");
+const {ms} = require("date-fns/locale");
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || '';
 
 
@@ -172,20 +173,31 @@ bot.onText(/\/statistics/, async (msg) => {
     try {
         let chatId = msg.chat.id;
         let goals = await goalService.getAllGoalByChatId(chatId);
-        let from=msg.reply_to_message?msg.reply_to_message.from:msg.from;
+        let from = msg.reply_to_message ? msg.reply_to_message.from : msg.from;
         if (goals.length === 0) {
             await bot.sendMessage(chatId, "There no any goals!")
             return;
         }
-        let result = `Goal statistics of [${from.first_name}](tg://user?id=${from.id}) for all time:\n\n`
-        for (let i = 0; i < goals.length; i++) {
-            let goal = goals[i];
-            let totalCount = await countService.getTotalCountByClientId(goal._id, from.id);
-            result += `${i + 1}. ${goal.name} - ${totalCount}\n`
-        }
-        await bot.sendMessage(chatId, result, {
-            parse_mode: "Markdown",
-        });
+        await bot.sendMessage(chatId, "Please choose period:", {
+            reply_markup: {
+                inline_keyboard: [
+                    [{text: "All time", callback_data: "statistics&allTime"}],
+                    [{text: "This year", callback_data: "statistics&year"}],
+                    [{text: "This month", callback_data: "statistics&month"}],
+                    [{text: "This week", callback_data: "statistics&week"}],
+                    [{text: "Today", callback_data: "statistics&today"}],
+                ]
+            }
+        })
+        // let result = `Goal statistics of [${from.first_name}](tg://user?id=${from.id}) for all time:\n\n`
+        // for (let i = 0; i < goals.length; i++) {
+        //     let goal = goals[i];
+        //     let totalCount = await countService.getTotalCountByClientId(goal._id, from.id);
+        //     result += `${i + 1}. ${goal.name} - ${totalCount}\n`
+        // }
+        // await bot.sendMessage(chatId, result, {
+        //     parse_mode: "Markdown",
+        // });
     } catch (e) {
         console.error(e);
     }
