@@ -5,6 +5,11 @@ const {getTime} = require("./timeService");
 const getAllGoalByChatId = async (chatId) => {
     return Goal.find({chatId});
 }
+
+const getOldestGoalOfChat = async (chatId) => {
+    return Goal.findOne({chatId}, {sort: {createdTime: 1}});
+}
+
 const addGoal = async (name, chatId, clientId) => {
     let sameGoal = await Goal.findOne({name, chatId});
     if (sameGoal) {
@@ -50,5 +55,6 @@ module.exports = {
     deleteGoalById,
     editGoalById,
     getAllGoalByChatId,
-    getGoalByNameAndChatId
+    getGoalByNameAndChatId,
+    getOldestGoalOfChat
 }

@@ -2,7 +2,9 @@ const TelegramBot = require("node-telegram-bot-api");
 const clientService = require("./services/clientService");
 const goalService = require("./services/goalService");
 const countService = require("./services/countService");
+const statisticService = require("./services/statisticService");
 const {ms} = require("date-fns/locale");
+const {getStatistics} = require("./services/statisticService");
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || '';
 
 
@@ -50,6 +52,20 @@ bot.on("callback_query", async (query) => {
                         parse_mode: "Markdown",
                     })
                 }
+                break;
+            }
+            case "statistics": {
+                let from = query.message.reply_to_message.from;
+                let statistics = await getStatistics(query.message.chat.id, from, fields[1], fields.length>2?parseInt(fields[2]):0);
+                let response = `Statistics of [${from.first_name}](tg://user?id=${from.id}) `;
+                for (let i = 0; i < statistics.length; i++) {
+                    let statistic = statistics[i];
+                    response += `${i + 1}) ${countService.printCount(statistic.goal, statistic.amount)}\n`
+                }
+                response+="\nCongratulations!"
+                await bot.sendMessage(query.message.chat.id, response, {
+                    parse_mode: "Markdown"
+                })
                 break;
             }
         }
@@ -178,16 +194,18 @@ bot.onText(/\/statistics/, async (msg) => {
             await bot.sendMessage(chatId, "There no any goals!")
             return;
         }
-        await bot.sendMessage(chatId, "Please choose period:", {
+        await bot.sendMessage(chatId, `Please choose period of [${from.first_name}](tg://user?id=${from.id}):`, {
             reply_markup: {
                 inline_keyboard: [
-                    [{text: "All time", callback_data: "statistics&allTime"}],
-                    [{text: "This year", callback_data: "statistics&year"}],
-                    [{text: "This month", callback_data: "statistics&month"}],
-                    [{text: "This week", callback_data: "statistics&week"}],
-                    [{text: "Today", callback_data: "statistics&today"}],
+                    [{text: "All time", callback_data: `statistics&allTime`}],
+                    [{text: "This year", callback_data: `statistics&year`}],
+                    [{text: "This month", callback_data: `statistics&month`}],
+                    [{text: "This week", callback_data: `statistics&week`}],
+                    [{text: "Today", callback_data: `statistics&today`}],
                 ]
-            }
+            },
+            reply_to_message_id: msg.reply_to_message ? msg.reply_to_message.message_id : msg.message_id,
+            parse_mode: "Markdown",
         })
         // let result = `Goal statistics of [${from.first_name}](tg://user?id=${from.id}) for all time:\n\n`
         // for (let i = 0; i < goals.length; i++) {
