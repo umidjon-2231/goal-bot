@@ -51,7 +51,7 @@ const getTotalCountByClientId = async (goalId, chatId) => {
 }
 
 const getCountByClientIdAndTime = async (goalId, fromId, fromDate, toDate) => {
-    let goal = await goalService.getGoalById(goalId).toArray();
+    let goal = await goalService.getGoalById(goalId);
     if (!goal) {
         throw new Error("Goal not found")
     }
