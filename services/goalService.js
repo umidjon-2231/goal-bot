@@ -7,7 +7,8 @@ const getAllGoalByChatId = async (chatId) => {
 }
 
 const getOldestGoalOfChat = async (chatId) => {
-    return Goal.findOne({chatId}, {sort: {createdTime: 1}});
+    let {_id} =await Goal.findOne({chatId}, {sort: {createdTime: 1}});
+    return Goal.findById(_id);
 }
 
 const addGoal = async (name, chatId, clientId) => {

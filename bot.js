@@ -4,7 +4,7 @@ const goalService = require("./services/goalService");
 const countService = require("./services/countService");
 const statisticService = require("./services/statisticService");
 const {ms} = require("date-fns/locale");
-const {getStatistics} = require("./services/statisticService");
+const {getStatistics, responsePeriodParser, } = require("./services/statisticService");
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || '';
 
 
@@ -57,12 +57,11 @@ bot.on("callback_query", async (query) => {
             case "statistics": {
                 let from = query.message.reply_to_message.from;
                 let statistics = await getStatistics(query.message.chat.id, from, fields[1], fields.length>2?parseInt(fields[2]):0);
-                let response = `Statistics of [${from.first_name}](tg://user?id=${from.id}) `;
+                let response = `Statistics of [${from.first_name}](tg://user?id=${from.id}) ${responsePeriodParser(fields[1], fields.length>2?parseInt(fields[2]):0)}:\n\n`;
                 for (let i = 0; i < statistics.length; i++) {
                     let statistic = statistics[i];
-                    response += `${i + 1}) ${countService.printCount(statistic.goal, statistic.amount)}\n`
+                    response += `${i + 1}. ${countService.printCount(statistic.goal, statistic.amount)}\n`
                 }
-                response+="\nCongratulations!"
                 await bot.sendMessage(query.message.chat.id, response, {
                     parse_mode: "Markdown"
                 })
