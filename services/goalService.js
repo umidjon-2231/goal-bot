@@ -7,12 +7,12 @@ const getAllGoalByChatId = async (chatId) => {
 }
 
 const getOldestGoalOfChat = async (chatId) => {
-    let {_id} =await Goal.findOne({chatId}, {sort: {createdTime: 1}});
+    let {_id} = await Goal.findOne({chatId}, {sort: {createdTime: 1}});
     return Goal.findById(_id);
 }
 
 const addGoal = async (name, chatId, clientId) => {
-    let sameGoal = await Goal.findOne({name, chatId});
+    let sameGoal = await getGoalByNameAndChatId(name, chatId);
     if (sameGoal) {
         return null;
     }
@@ -42,7 +42,9 @@ const deleteGoalById = async (goalId) => {
 }
 
 const getGoalByNameAndChatId = async (name, chatId) => {
-    return Goal.findOne({name, chatId});
+    const escapedSearchTerm = RegExp.escape(name);
+    const regex = new RegExp(escapedSearchTerm, 'i');
+    return Goal.findOne({name: {$regex: regex}, chatId});
 }
 
 

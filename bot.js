@@ -21,6 +21,14 @@ bot.on("callback_query", async (query) => {
     try {
         switch (fields[0]) {
             case "cancel": {
+                let fromId = fields[1]
+                if (fromId !== query.from.id + "") {
+                    await bot.answerCallbackQuery(query.id, {
+                        text: "It is not your button!",
+                        show_alert: true,
+                    })
+                    break;
+                }
                 await bot.editMessageText("Canceled!", {
                     message_id: query.message.message_id,
                     chat_id: query.message.chat.id,
