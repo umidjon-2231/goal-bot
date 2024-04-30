@@ -54,4 +54,4 @@ jobs:
               tmux kill-session -t $NAME
             fi
               tmux new-session -d -s $NAME
-            tmux send-keys "yarn && yarn start" C-m
+            tmux send-keys "bash -i -c \"yarn && yarn start\"" C-m
