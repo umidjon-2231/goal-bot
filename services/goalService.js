@@ -1,5 +1,6 @@
 const Goal = require("../models/Goal")
 const {getTime} = require("./timeService");
+const {escapeRegex} = require("./utils");
 
 
 const getAllGoalByChatId = async (chatId) => {
@@ -42,7 +43,7 @@ const deleteGoalById = async (goalId) => {
 }
 
 const getGoalByNameAndChatId = async (name, chatId) => {
-    const escapedSearchTerm = RegExp.escape(name);
+    const escapedSearchTerm = escapeRegex(name);
     const regex = new RegExp(escapedSearchTerm, 'i');
     return Goal.findOne({name: {$regex: regex}, chatId});
 }
