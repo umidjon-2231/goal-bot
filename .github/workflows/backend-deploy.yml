@@ -15,7 +15,7 @@ jobs:
       - name: Setup Typescript
         run: npm install tsc --g
       - name: Test Application
-        run: npm tsc --noEmit
+        run: npx tsc --noEmit
   build:
     runs-on: ubuntu-22.04
     needs: test
