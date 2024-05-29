@@ -1,8 +1,9 @@
-require('dotenv').config()
+import dotenv from 'dotenv'
 import express from 'express';
 import mongoose from "mongoose";
 import bot from "./bot";
 
+dotenv.config()
 const app = express()
 
 const PORT = process.env.PORT || 4000
@@ -20,7 +21,7 @@ app.post("/api/bot/:token", async (req, res) => {
         }
         let message = req.body;
         console.log(message);
-        await bot.processUpdate(message)
+        bot.processUpdate(message)
         res.status(200).json()
     } catch (e) {
         res.status(400).json({message: e})

@@ -1,11 +1,7 @@
 import TelegramBot from "node-telegram-bot-api";
-
 import clientService from "./services/clientService";
-
 import goalService from "./services/goalService";
-
 import countService from "./services/countService";
-
 import {getStatistics, responsePeriodParser} from "./services/statisticService";
 import {Period} from "./services/timeService";
 import mongoose from "mongoose";
