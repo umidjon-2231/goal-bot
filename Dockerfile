@@ -40,4 +40,4 @@ EXPOSE 3000
 ENV NODE_ENV=production
 
 # Command to run the app
-CMD ["node", "dist/index.ts"]
+CMD ["node", "dist/index.js"]
