@@ -1,7 +1,13 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
+export interface CountI {
+    amount: number
+    goal: typeof mongoose.Types.ObjectId,
+    client: typeof mongoose.Types.ObjectId,
+    createdTime: Date
+}
 
-const scheme = new mongoose.Schema({
+const scheme = new mongoose.Schema<CountI>({
     amount: {
         type: Number,
         required: true,
@@ -24,4 +30,4 @@ const scheme = new mongoose.Schema({
     validateBeforeSave: true,
 })
 
-module.exports = mongoose.models.Count || mongoose.model('Count', scheme)
+export default mongoose.models.Count || mongoose.model('Count', scheme)

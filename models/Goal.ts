@@ -1,7 +1,13 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
+export interface GoalI {
+    name: string,
+    chatId: number
+    createdBy: typeof mongoose.Types.ObjectId
+    createdTime: Date
+}
 
-const scheme = new mongoose.Schema({
+const scheme = new mongoose.Schema<GoalI>({
     name: {
         type: String,
         required: true,
@@ -22,4 +28,4 @@ const scheme = new mongoose.Schema({
     validateBeforeSave: true,
 })
 
-module.exports = mongoose.models.Goal || mongoose.model('Goal', scheme)
+export default mongoose.models.Goal || mongoose.model('Goal', scheme)

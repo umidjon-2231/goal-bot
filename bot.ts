@@ -1,22 +1,27 @@
-const TelegramBot = require("node-telegram-bot-api");
-const clientService = require("./services/clientService");
-const goalService = require("./services/goalService");
-const countService = require("./services/countService");
-const statisticService = require("./services/statisticService");
-const {ms} = require("date-fns/locale");
-const {getStatistics, responsePeriodParser, } = require("./services/statisticService");
+import TelegramBot from "node-telegram-bot-api";
+
+import clientService from "./services/clientService";
+
+import goalService from "./services/goalService";
+
+import countService from "./services/countService";
+
+import {getStatistics, responsePeriodParser} from "./services/statisticService";
+import {Period} from "./services/timeService";
+import mongoose from "mongoose";
+
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || '';
 
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, {webHook: true});
 
 bot.on("message", (msg) => {
-    console.log(`New message from ${msg.from.id} in chat ${msg.chat.id}`)
+    console.log(`New message from ${msg.from!.id} in chat ${msg.chat.id}`)
 })
 
 bot.on("callback_query", async (query) => {
     console.log(query)
-    let fields = query.data.split("&");
+    let fields = query.data!.split("&");
     console.log(fields)
     try {
         switch (fields[0]) {
@@ -30,13 +35,13 @@ bot.on("callback_query", async (query) => {
                     break;
                 }
                 await bot.editMessageText("Canceled!", {
-                    message_id: query.message.message_id,
-                    chat_id: query.message.chat.id,
+                    message_id: query.message!.message_id,
+                    chat_id: query.message!.chat.id,
                 })
                 break;
             }
             case "count": {
-                let fromId = fields[1], goalId = fields[2], amount = parseInt(fields[3])
+                let fromId = fields[1], goalId = fields[2] as unknown as typeof mongoose.Types.ObjectId, amount = parseInt(fields[3])
                 if (isNaN(amount)) {
                     await bot.answerCallbackQuery(query.id, {
                         text: "Something wrong with amount",
@@ -55,22 +60,22 @@ bot.on("callback_query", async (query) => {
                 let count = await countService.addCount(goalId, fromId, amount);
                 if (count) {
                     await bot.editMessageText(`[${query.from.first_name}](tg://user?id=${query.from.id}), new data recorded\n\n${goal.name} +${amount}`, {
-                        message_id: query.message.message_id,
-                        chat_id: query.message.chat.id,
+                        message_id: query.message!.message_id,
+                        chat_id: query.message!.chat.id,
                         parse_mode: "Markdown",
                     })
                 }
                 break;
             }
             case "statistics": {
-                let from = query.message.reply_to_message.from;
-                let statistics = await getStatistics(query.message.chat.id, from, fields[1], fields.length>2?parseInt(fields[2]):0);
-                let response = `Statistics of [${from.first_name}](tg://user?id=${from.id}) ${responsePeriodParser(fields[1], fields.length>2?parseInt(fields[2]):0)}:\n\n`;
+                let from = query.message!.reply_to_message!.from;
+                let statistics = await getStatistics(query.message!.chat.id, from!, fields[1] as Period, fields.length > 2 ? parseInt(fields[2]) : 0);
+                let response = `Statistics of [${from!.first_name}](tg://user?id=${from!.id}) ${responsePeriodParser(fields[1] as Period, fields.length > 2 ? parseInt(fields[2]) : 0)}:\n\n`;
                 for (let i = 0; i < statistics.length; i++) {
                     let statistic = statistics[i];
                     response += `${i + 1}. ${countService.printCount(statistic.goal, statistic.amount)}\n`
                 }
-                await bot.sendMessage(query.message.chat.id, response, {
+                await bot.sendMessage(query.message!.chat.id, response, {
                     parse_mode: "Markdown"
                 })
                 break;
@@ -89,13 +94,13 @@ bot.onText(/\/start/, async (msg) => {
             if (!existById) {
                 await clientService.addClient({
                     chatId,
-                    fullName: msg.from.first_name,
-                    username: msg.from.username,
+                    fullName: msg.from!.first_name,
+                    username: msg.from!.username || '',
                 })
-                await bot.sendMessage(chatId, `Hi ${msg.from.first_name}. Welcome to goal counter bot`)
+                await bot.sendMessage(chatId, `Hi ${msg.from!.first_name}. Welcome to goal counter bot`)
                 return;
             }
-            await bot.sendMessage(chatId, `Hi ${msg.from.first_name}. Nice to meet you again!`)
+            await bot.sendMessage(chatId, `Hi ${msg.from!.first_name}. Nice to meet you again!`)
         } else {
             await bot.sendMessage(chatId, `Hello everyone!`)
         }
@@ -124,7 +129,7 @@ bot.onText(/\/goals/, async (msg) => {
 
 bot.onText(/\/new +(.+)/i, async (msg, match) => {
     try {
-        let chatId = msg.chat.id, fromId = msg.from.id, goalName = match[1];
+        let chatId = msg.chat.id, fromId = msg.from!.id, goalName = match![1];
         if (!goalName || goalName.trim().length === 0) {
             await bot.sendMessage(chatId, `Please write correct command. Example: /new goalName`, {
                 reply_to_message_id: msg.message_id,
@@ -151,7 +156,7 @@ bot.onText(/\/new +(.+)/i, async (msg, match) => {
 
 bot.onText(/\/count (.+) (\d+)/, async (msg, match) => {
     try {
-        let chatId = msg.chat.id, goalName = match[1], amount = parseInt(match[2]);
+        let chatId = msg.chat.id, goalName = match![1], amount = parseInt(match![2]);
         let goal = await goalService.getGoalByNameAndChatId(goalName, chatId);
         if (!goal) {
             await bot.sendMessage(chatId, `Goal with name "${goalName}" not found`);
@@ -165,7 +170,7 @@ bot.onText(/\/count (.+) (\d+)/, async (msg, match) => {
             return;
         }
         //count&656634861&65e2575cd25df84ba017d715&10
-        let client = clientService.existByChatId(msg.from.id);
+        let client = clientService.existByChatId(msg.from!.id);
         if (!client) {
             await bot.sendMessage(chatId, "Please first register by sending start command to me in private chat", {
                 reply_to_message_id: msg.message_id,
@@ -173,16 +178,16 @@ bot.onText(/\/count (.+) (\d+)/, async (msg, match) => {
             })
             return;
         }
-        console.log(`count&${msg.from.id}&${goal._id}&${amount}`)
+        console.log(`count&${msg.from!.id}&${goal._id}&${amount}`)
         await bot.sendMessage(chatId,
-            `[${msg.from.first_name}](tg://user?id=${msg.from.id}), confirm adding new record:\n\n${goal.name} +${amount}`, {
+            `[${msg.from!.first_name}](tg://user?id=${msg.from!.id}), confirm adding new record:\n\n${goal.name} +${amount}`, {
                 reply_to_message_id: msg.message_id,
                 allow_sending_without_reply: true,
                 parse_mode: "Markdown",
                 reply_markup: {
                     inline_keyboard: [[
                         {text: "Cancel", callback_data: "cancel"},
-                        {text: "Confirm", callback_data: `count&${msg.from.id}&${goal._id}&${amount}`}
+                        {text: "Confirm", callback_data: `count&${msg.from!.id}&${goal._id}&${amount}`}
                     ]]
                 }
             })
@@ -201,7 +206,7 @@ bot.onText(/\/statistics/, async (msg) => {
             await bot.sendMessage(chatId, "There no any goals!")
             return;
         }
-        await bot.sendMessage(chatId, `Please choose period of [${from.first_name}](tg://user?id=${from.id}):`, {
+        await bot.sendMessage(chatId, `Please choose period of [${from!.first_name}](tg://user?id=${from!.id}):`, {
             reply_markup: {
                 inline_keyboard: [
                     [{text: "All time", callback_data: `statistics&allTime`}],
@@ -229,4 +234,4 @@ bot.onText(/\/statistics/, async (msg) => {
 })
 
 
-module.exports = bot;
+export default bot;

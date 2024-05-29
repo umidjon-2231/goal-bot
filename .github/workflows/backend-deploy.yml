@@ -1,4 +1,4 @@
-name: Build and host frontend
+name: Build and host backend
 on:
   push:
     branches: [ master ]
@@ -12,17 +12,18 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
-      - name: Build Application
-        run: |
-          yarn
+      - name: Test Application
+        run: npx tsc --noEmit
+
   build:
     runs-on: ubuntu-22.04
     needs: test
     steps:
-      - name: Build
+      - name: Package
         uses: appleboy/ssh-action@master
         env:
-          PROJECT_PATH: ${{ secrets.PROJECT_PATH }}
+          PROJECT_PATH: ${{secrets.PROJECT_PATH}}
+          NAME: ${{ secrets.NAME }}
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
@@ -32,9 +33,10 @@ jobs:
             echo Locating path: "$PROJECT_PATH"
             cd $PROJECT_PATH
             git pull
+            docker build -t $NAME-backend .
   run:
     runs-on: ubuntu-22.04
-    needs: [ test, build ]
+    needs: [test, build]
     steps:
       - name: Run application
         uses: appleboy/ssh-action@master
@@ -49,9 +51,6 @@ jobs:
           script: |
             echo Locating path: "$PROJECT_PATH"
             cd $PROJECT_PATH
-            echo tmux session manage: "$NAME"
-            if tmux has-session -t $NAME; then
-              tmux kill-session -t $NAME
-            fi
-              tmux new-session -d -s $NAME
-            tmux send-keys "yarn && yarn start" C-m
+            docker stop $NAME-backend || true
+            docker rm $NAME-backend || true
+            docker run -d --restart unless-stopped -p 3007:3000 --name $NAME-backend $NAME-backend

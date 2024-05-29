@@ -1,7 +1,7 @@
 require('dotenv').config()
-const express = require('express')
-const mongoose = require("mongoose");
-const bot = require("./bot");
+import express from 'express';
+import mongoose from "mongoose";
+import bot from "./bot";
 
 const app = express()
 

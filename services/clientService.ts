@@ -2,7 +2,7 @@ const Client = require("../models/Client")
 const {getTime} = require("./timeService");
 
 
-const existById = async (chatId) => {
+const existById = async (chatId: string | number) => {
     if (!chatId) {
         return false;
     }
@@ -10,7 +10,11 @@ const existById = async (chatId) => {
 }
 
 
-const addClient = async ({chatId, fullName, username}) => {
+const addClient = async ({chatId, fullName, username}: {
+    chatId: string | number,
+    fullName: string,
+    username: string
+}) => {
     let newClient = new Client({
         chatId,
         fullName,
@@ -20,9 +24,9 @@ const addClient = async ({chatId, fullName, username}) => {
     return newClient.save()
 }
 
-const getClientByChatId = async (chatId) => {
+const getClientByChatId = async (chatId: string | number) => {
     return Client.findOne({chatId});
 }
 
 
-module.exports = {existByChatId: existById, addClient, getClientByChatId}
+export default {existByChatId: existById, addClient, getClientByChatId}

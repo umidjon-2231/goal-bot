@@ -1,12 +1,14 @@
-const fnsTz = require("date-fns-tz")
-const fns = require("date-fns")
+import fns from "date-fns";
+import fnsTz from "date-fns-tz";
 
-const getTime = () => {
+export type Period="year" | "month" | "day" | "week" | "today" | "allTime";
+
+export const getTime = () => {
     let utcTime = fnsTz.zonedTimeToUtc(new Date(), Intl.DateTimeFormat().resolvedOptions().timeZone);
     return fnsTz.utcToZonedTime(utcTime, "Asia/Tashkent")
 }
 
-const getYearStartAndEnd = (minus = 0) => {
+export const getYearStartAndEnd = (minus = 0) => {
     let time = getTime();
     if (minus > 0) {
         time = fns.subYears(time, minus);
@@ -14,7 +16,7 @@ const getYearStartAndEnd = (minus = 0) => {
     return {start: fns.startOfYear(time), end: fns.endOfYear(time)}
 }
 
-const getMonthStartAndEnd = (minus = 0) => {
+export const getMonthStartAndEnd = (minus = 0) => {
     let time = getTime();
     if (minus > 0) {
         time = fns.subMonths(time, minus);
@@ -22,7 +24,7 @@ const getMonthStartAndEnd = (minus = 0) => {
     return {start: fns.startOfMonth(time), end: fns.endOfMonth(time)}
 }
 
-const getWeekStartAndEnd = (minus = 0) => {
+export const getWeekStartAndEnd = (minus = 0) => {
     let time = getTime();
     if (minus > 0) {
         time = fns.subWeeks(time, minus);
@@ -30,7 +32,7 @@ const getWeekStartAndEnd = (minus = 0) => {
     return {start: fns.startOfWeek(time), end: fns.endOfWeek(time)}
 }
 
-const getDayStartAndEnd = (minus = 0) => {
+export const getDayStartAndEnd = (minus = 0) => {
     let time = getTime();
     if (minus > 0) {
         time = fns.subDays(time, minus);
@@ -38,7 +40,7 @@ const getDayStartAndEnd = (minus = 0) => {
     return {start: fns.startOfDay(time), end: fns.endOfDay(time)}
 }
 
-const periodToStartAndEndDate = (period, minus = 0, goalCreatedTime = new Date()) => {
+export const periodToStartAndEndDate = (period: Period, minus = 0, goalCreatedTime = new Date()) => {
     switch (period) {
         case "year": {
             return getYearStartAndEnd(minus)
@@ -59,7 +61,7 @@ const periodToStartAndEndDate = (period, minus = 0, goalCreatedTime = new Date()
 }
 
 
-module.exports = {
+export default {
     getTime,
     getYearStartAndEnd,
     getMonthStartAndEnd,

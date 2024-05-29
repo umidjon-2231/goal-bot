@@ -1,11 +1,12 @@
-const goalService = require("./goalService");
-const clientService = require("./clientService");
-const Count = require("../models/Count")
-const Goal = require("../models/Goal")
-const {getTime} = require("./timeService");
+import goalService from "./goalService";
+import clientService from "./clientService";
+import Count from "../models/Count";
+import {GoalI} from "../models/Goal";
+import {getTime} from "./timeService";
+import mongoose from "mongoose";
 
 
-const addCount = async (goalId, fromId, amount = 0) => {
+const addCount = async (goalId: typeof mongoose.Types.ObjectId, fromId: string | number, amount = 0) => {
     if (amount <= 0) {
         throw new Error("Amount cannot be less or equal to zero")
     }
@@ -26,7 +27,7 @@ const addCount = async (goalId, fromId, amount = 0) => {
     return newCount.save();
 }
 
-const getTotalCountByClientId = async (goalId, chatId) => {
+const getTotalCountByClientId = async (goalId: typeof mongoose.Types.ObjectId, chatId: string | number) => {
     let goal = await goalService.getGoalById(goalId);
     if (!goal) {
         throw new Error("Goal not found")
@@ -50,7 +51,7 @@ const getTotalCountByClientId = async (goalId, chatId) => {
     return count[0]?.totalAmount ?? 0;
 }
 
-const getCountByClientIdAndTime = async (goalId, fromId, fromDate, toDate) => {
+const getCountByClientIdAndTime = async (goalId: typeof mongoose.Types.ObjectId, fromId: string | number, fromDate: Date, toDate: Date) => {
     let goal = await goalService.getGoalById(goalId);
     if (!goal) {
         throw new Error("Goal not found")
@@ -80,9 +81,9 @@ const getCountByClientIdAndTime = async (goalId, fromId, fromDate, toDate) => {
 }
 
 
-const printCount = (goal, amount) => {
+const printCount = (goal: GoalI, amount: number) => {
     return `${goal.name} - ${amount}`
 }
 
 
-module.exports = {addCount, getTotalCountByClientId, printCount, getCountByClientIdAndTime}
+export default {addCount, getTotalCountByClientId, printCount, getCountByClientIdAndTime}
