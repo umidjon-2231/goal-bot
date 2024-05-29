@@ -12,9 +12,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
+      - name: Setup Typescript
+        run: npm install tsc --g
       - name: Test Application
-        run: npx tsc --noEmit
-
+        run: npm tsc --noEmit
   build:
     runs-on: ubuntu-22.04
     needs: test
