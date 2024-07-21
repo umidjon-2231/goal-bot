@@ -30,5 +30,5 @@ app.post("/api/bot/:token", async (req, res) => {
 
 app.listen(PORT, async () => {
     await mongoose.connect(MONGO_URL, {})
-    console.log(`Server is up and running on PORT ${PORT}`)
+    console.log(`Server is up and running on PORT ${PORT} to bot ${TELEGRAM_TOKEN.replace(/:(.+)/, "")}`)
 })
