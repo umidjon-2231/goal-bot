@@ -31,7 +31,7 @@ RUN yarn install
 
 # Copy the built application from the build image
 COPY --from=build /usr/src/app/dist ./dist
-COPY --from=build /usr/src/app/.env ./
+COPY --from=build /usr/src/app/.env ./.env
 
 # Expose the port the app runs on
 EXPOSE 4000
