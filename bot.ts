@@ -5,6 +5,9 @@ import countService from "./services/countService";
 import {getStatistics, responsePeriodParser} from "./services/statisticService";
 import {Period} from "./services/timeService";
 import mongoose from "mongoose";
+import dotenv from "dotenv";
+
+dotenv.config()
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || '';
 
