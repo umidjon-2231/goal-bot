@@ -34,7 +34,7 @@ COPY --from=build /usr/src/app/dist ./dist
 COPY --from=build /usr/src/app/.env ./
 
 # Expose the port the app runs on
-EXPOSE 3000
+EXPOSE 4000
 
 # Define environment variable
 ENV NODE_ENV=production
