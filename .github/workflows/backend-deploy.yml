@@ -54,4 +54,4 @@ jobs:
             cd $PROJECT_PATH
             docker stop $NAME-backend || true
             docker rm $NAME-backend || true
-            docker run -d --restart unless-stopped -p 3007:3000 --name $NAME-backend $NAME-backend
+            docker run -d --restart unless-stopped -p 4000:4000 --name $NAME-backend $NAME-backend
