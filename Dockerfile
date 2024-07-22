@@ -9,13 +9,13 @@ WORKDIR /usr/src/app
 COPY package.json ./
 
 # Install dependencies
-RUN yarn install
+RUN npm install
 
 # Copy the rest of the application code to the working directory
 COPY . .
 
 # Build the TypeScript code
-RUN yarn build
+RUN npm run build
 
 # Use a smaller base image for the final build
 FROM node:18-bullseye-slim AS runtime
@@ -27,7 +27,7 @@ WORKDIR /usr/src/app
 COPY package.json ./
 
 # Install only production dependencies
-RUN yarn install
+RUN npm install
 
 # Copy the built application from the build image
 COPY --from=build /usr/src/app/dist ./dist
