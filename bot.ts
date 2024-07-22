@@ -40,7 +40,8 @@ bot.on("callback_query", async (query) => {
                 break;
             }
             case "count": {
-                let fromId = fields[1], goalId = fields[2] as unknown as typeof mongoose.Types.ObjectId, amount = parseInt(fields[3])
+                let fromId = fields[1], goalId = fields[2] as unknown as typeof mongoose.Types.ObjectId,
+                    amount = parseInt(fields[3])
                 if (isNaN(amount)) {
                     await bot.answerCallbackQuery(query.id, {
                         text: "Something wrong with amount",

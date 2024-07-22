@@ -1,6 +1,5 @@
-const Client = require("../models/Client")
-const {getTime} = require("./timeService");
-
+import {getTime} from "./timeService";
+import Client from "../models/Client";
 
 const existById = async (chatId: string | number) => {
     if (!chatId) {
