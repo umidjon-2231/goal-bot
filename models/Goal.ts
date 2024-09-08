@@ -6,6 +6,7 @@ export interface GoalI {
     chatId: number
     createdBy: typeof mongoose.Types.ObjectId
     createdTime: Date
+    notification: boolean
 }
 
 const scheme = new mongoose.Schema<GoalI>({
@@ -24,6 +25,11 @@ const scheme = new mongoose.Schema<GoalI>({
     createdTime: {
         type: Date,
         required: true,
+    },
+    notification: {
+        type: Boolean,
+        required: true,
+        default: false,
     }
 }, {
     validateBeforeSave: true,

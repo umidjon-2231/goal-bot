@@ -10,8 +10,8 @@ export interface CountRank {
     fullName: string,
 }
 
-export const getTop = async (chatId: string | number, maxRank: number, period: Period, minus: number) => {
-    if (maxRank > 10) {
+export const getTop = async (chatId: string | number, maxRank: number, period: Period, minus: number = 0) => {
+    if (maxRank > 10 || maxRank < 1) {
         maxRank = 10;
     }
     let result: { goal: GoalI, counts: CountRank[] }[] = []

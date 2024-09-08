@@ -8,6 +8,8 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import {bold, uppercaseStart, userUrl} from "./services/utils";
 import {getTop, parseRankResult} from "./services/rankService";
+import {turnNotification} from "./services/notificationService";
+import {ms} from "date-fns/locale";
 
 dotenv.config()
 
@@ -119,7 +121,7 @@ bot.on("callback_query", async (query) => {
                 }
                 let minus = parseInt(fields[3]) || 0;
                 let tops = await getTop(query.message.chat.id, maxRank, period, minus);
-                let response = `${bold("Top "+maxRank)} for ${bold(responsePeriodParser(period, minus))}:\n\n`;
+                let response = `${bold("Top " + maxRank)} for ${bold(responsePeriodParser(period, minus))}:\n\n`;
                 for (let o of tops) {
                     response += `${bold(uppercaseStart(o.goal.name))}:\n${parseRankResult(o.counts)}\n`;
                 }
@@ -311,7 +313,7 @@ bot.onText(/^\/top(10|[1-9]|)/, async (msg, match) => {
             await bot.sendMessage(chatId, "There no any goals!")
             return;
         }
-        await bot.sendMessage(chatId, `Please choose period for ${bold("Top "+maxRank)}`, {
+        await bot.sendMessage(chatId, `Please choose period for ${bold("Top " + maxRank)}`, {
             parse_mode: "HTML",
             reply_markup: {
                 inline_keyboard: [
@@ -327,6 +329,21 @@ bot.onText(/^\/top(10|[1-9]|)/, async (msg, match) => {
     } catch (e) {
         console.error(e);
     }
+})
+
+
+bot.onText(/^\/notification_(off|on)/, async (msg, match) => {
+    if (msg.chat.type === "private") {
+        return await bot.sendMessage(msg.chat.id, "Private chats don't support notification!")
+    }
+    if (match[1]==="on"){
+        await turnNotification(msg.chat.id.toString(), true)
+    }else if(match[2]==="off"){
+        await turnNotification(msg.chat.id.toString(), false)
+    }
+    return await bot.sendMessage(msg.chat.id,"Notification turned "+match[1], {
+        reply_to_message_id: msg.message_id
+    })
 })
 
 

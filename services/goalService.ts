@@ -13,7 +13,7 @@ const getOldestGoalOfChat = async (chatId: string | number) => {
     return Goal.findById<GoalI>(_id);
 }
 
-const addGoal = async (name: string, chatId: string | number, clientId: string|number) => {
+const addGoal = async (name: string, chatId: string | number, clientId: string | number) => {
     let sameGoal = await getGoalByNameAndChatId(name, chatId);
     if (sameGoal) {
         return null;
@@ -54,6 +54,22 @@ const getGoalById = async (goalId: mongoose.Types.ObjectId) => {
     return Goal.findById(goalId);
 }
 
+export const getChatsNotificationOn = async () => {
+    return Goal.aggregate<{_id: number}>([
+        {
+            $match: {
+                notification: true
+            }
+        },
+        {
+            $group: {
+                _id: "$chatId"
+            }
+        }
+    ]);
+
+}
+
 export default {
     getGoalById,
     addGoal,
@@ -61,5 +77,6 @@ export default {
     editGoalById,
     getAllGoalByChatId,
     getGoalByNameAndChatId,
-    getOldestGoalOfChat
+    getOldestGoalOfChat,
+    getGoalsNotificationOn: getChatsNotificationOn,
 }
