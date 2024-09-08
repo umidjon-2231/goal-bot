@@ -255,7 +255,7 @@ bot.onText(/\/statistics/, async (msg) => {
     }
 })
 
-bot.onText(/^\/top(10|[1-9]|)$/, async (msg, match) => {
+bot.onText(/^\/top(10|[1-9]|)/, async (msg, match) => {
     if (msg.chat.type === "private") {
         return await bot.sendMessage(msg.chat.id, "Here you are always the best", {
             parse_mode: "HTML",
