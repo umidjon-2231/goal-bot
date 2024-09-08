@@ -33,7 +33,7 @@ export const parseRankResult = (counts: CountRank[]) => {
         let first = counts[0];
         result = `${first.fullName} - ${bold(first.count.toString())} ${topStickers[0]}\n`
     } else if (counts.length === 0) {
-        result = italic("No goal records found");
+        result = italic("No goal records found\n");
     } else {
         counts.forEach((ranker, i) => {
             result += `${i + 1}. ${userUrl(ranker.clientId, ranker.fullName)} - ${bold(ranker.count.toString())} ${topStickers[i] ?? ""}\n`
