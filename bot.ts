@@ -15,7 +15,7 @@ const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || '';
 console.log(process.env.NODE_ENV)
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, {
-    webHook: process.env.NODE_ENV === 'production',
+    webHook: process.env.NODE_ENV !== 'development',
     polling: process.env.NODE_ENV === 'development',
 });
 
