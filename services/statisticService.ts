@@ -16,8 +16,8 @@ export const getStatistics = async (chatId: string | number, from: TelegramBot.U
         result.push({goal, amount})
     }
     return result.sort((a, b) => {
-        let diff = a.amount - b.amount;
-        return diff===0?a.goal.name.localeCompare(b.goal.name):diff;
+        let diff = b.amount - a.amount;
+        return diff===0?b.goal.name.localeCompare(a.goal.name):diff;
     });
 }
 
