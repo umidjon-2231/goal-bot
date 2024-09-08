@@ -1,14 +1,14 @@
 import countService from "./countService";
 import goalService from "./goalService";
-import timeService, {Period} from "./timeService";
+import timeService, {parseDate, Period} from "./timeService";
 import TelegramBot from "node-telegram-bot-api";
+import {format, isThisWeek, isThisYear, isToday} from "date-fns";
 
 export const getStatistics = async (chatId: string | number, from: TelegramBot.User, period: Period, minus: number) => {
     let result = []
     let goals = await goalService.getAllGoalByChatId(chatId);
     let oldestGoal = await goalService.getOldestGoalOfChat(chatId);
     console.log(oldestGoal.createdTime);
-    console.log(goals)
     let {end, start} = timeService.periodToStartAndEndDate(period, minus, oldestGoal.createdTime);
     for (let goal of goals) {
         let amount = await countService.getCountByClientIdAndTime(goal._id, from.id, start, end);
@@ -17,10 +17,30 @@ export const getStatistics = async (chatId: string | number, from: TelegramBot.U
     return result;
 }
 
-export const responsePeriodParser = (period: Period, minus: number) => {
-    if (period === "allTime") {
-        return "for all time"
-    }
+export const responsePeriodParser = (period: Period, minus: number): string => {
     let {end, start} = timeService.periodToStartAndEndDate(period, minus);
-    return `from ${start.toLocaleDateString()} to ${end.toLocaleDateString()}`
+    switch (period) {
+        case "year":
+            if (isThisYear(start)) {
+                return "this year"
+            }
+            return start.getFullYear().toString();
+        case "month":
+            return format(start, `MMMM${isThisYear(start) ? "" : " yyyy"}`);
+        case "day":
+            if (isToday(start)) {
+                return "today";
+            }
+            return parseDate(start);
+        case "week":
+            if (isThisWeek(start)) {
+                return "this week";
+            }
+            break;
+        case "today":
+            return "today";
+        case "allTime":
+            return "all time";
+    }
+    return `${parseDate(start)} to ${parseDate(end)}`
 }

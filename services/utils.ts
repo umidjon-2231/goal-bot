@@ -2,4 +2,15 @@ export function escapeRegex(string: string) {
     return string.replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&');
 }
 
-export default {escapeRegex}
+export function uppercaseStart(text: string) {
+    return text.at(0).toUpperCase() + text.slice(1);
+}
+
+
+export function bold(text: string) {
+    return `<b>${text}</b>`;
+}
+
+export function italic(text: string) {
+    return `<i>${text}</i>`;
+}

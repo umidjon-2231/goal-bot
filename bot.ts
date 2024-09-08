@@ -1,4 +1,4 @@
-import TelegramBot from "node-telegram-bot-api";
+import TelegramBot, {InlineKeyboardButton} from "node-telegram-bot-api";
 import clientService from "./services/clientService";
 import goalService from "./services/goalService";
 import countService from "./services/countService";
@@ -6,13 +6,18 @@ import {getStatistics, responsePeriodParser} from "./services/statisticService";
 import {Period} from "./services/timeService";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import {bold, uppercaseStart} from "./services/utils";
+import {getTop, parseRankResult} from "./services/rankService";
 
 dotenv.config()
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || '';
+console.log(process.env.NODE_ENV)
 
-
-const bot = new TelegramBot(TELEGRAM_TOKEN, {webHook: true});
+const bot = new TelegramBot(TELEGRAM_TOKEN, {
+    webHook: process.env.NODE_ENV === 'production',
+    polling: process.env.NODE_ENV === 'development',
+});
 
 bot.on("message", (msg) => {
     console.log(`New message from ${msg.from!.id} in chat ${msg.chat.id}`)
@@ -40,7 +45,8 @@ bot.on("callback_query", async (query) => {
                 break;
             }
             case "count": {
-                let fromId = fields[1], goalId = fields[2] as unknown as typeof mongoose.Types.ObjectId,
+                let fromId = fields[1],
+                    goalId = fields[2] as unknown as mongoose.Types.ObjectId,
                     amount = parseInt(fields[3])
                 if (isNaN(amount)) {
                     await bot.answerCallbackQuery(query.id, {
@@ -69,14 +75,39 @@ bot.on("callback_query", async (query) => {
             }
             case "statistics": {
                 let from = query.message!.reply_to_message!.from;
-                let statistics = await getStatistics(query.message!.chat.id, from!, fields[1] as Period, fields.length > 2 ? parseInt(fields[2]) : 0);
-                let response = `Statistics of [${from!.first_name}](tg://user?id=${from!.id}) ${responsePeriodParser(fields[1] as Period, fields.length > 2 ? parseInt(fields[2]) : 0)}:\n\n`;
+                let minus = fields.length > 2 ? parseInt(fields[2]) : 0;
+                let period = fields[1] as Period;
+                let statistics = await getStatistics(query.message!.chat.id, from!, period, minus);
+                let response = `Statistics of [${from!.first_name}](tg://user?id=${from!.id}) for ${responsePeriodParser(period, minus)}:\n\n`;
                 for (let i = 0; i < statistics.length; i++) {
                     let statistic = statistics[i];
                     response += `${i + 1}. ${countService.printCount(statistic.goal, statistic.amount)}\n`
                 }
+                let buttons: InlineKeyboardButton[][] = [[], []]
+                if (period !== "allTime") {
+                    buttons[0].push({
+                        text: "Previous " + fields[1] + " (" + responsePeriodParser(period, minus + 1) + ")",
+                        callback_data: [fields[0], fields[1], minus + 1].join("&")
+                    })
+                    if (minus > 0) {
+                        buttons[0].push({
+                            text: "Next " + fields[1] + " (" + responsePeriodParser(period, minus - 1) + ")",
+                            callback_data: [fields[0], fields[1], minus - 1].join("&")
+                        })
+                        if (minus > 1) {
+                            buttons[1].push({
+                                text: uppercaseStart(responsePeriodParser(period, 0)),
+                                callback_data: [fields[0], fields[1], 0].join("&")
+                            })
+                        }
+                    }
+                }
                 await bot.sendMessage(query.message!.chat.id, response, {
-                    parse_mode: "Markdown"
+                    parse_mode: "Markdown",
+                    reply_to_message_id: query.message!.reply_to_message!.message_id,
+                    reply_markup: {
+                        inline_keyboard: buttons
+                    }
                 })
                 break;
             }
@@ -84,6 +115,7 @@ bot.on("callback_query", async (query) => {
     } catch (e) {
         console.error(e)
     }
+    await bot.answerCallbackQuery(query.id)
 })
 
 bot.onText(/\/start/, async (msg) => {
@@ -169,7 +201,6 @@ bot.onText(/\/count (.+) (\d+)/, async (msg, match) => {
             })
             return;
         }
-        //count&656634861&65e2575cd25df84ba017d715&10
         let client = clientService.existByChatId(msg.from!.id);
         if (!client) {
             await bot.sendMessage(chatId, "Please first register by sending start command to me in private chat", {
@@ -210,27 +241,38 @@ bot.onText(/\/statistics/, async (msg) => {
             reply_markup: {
                 inline_keyboard: [
                     [{text: "All time", callback_data: `statistics&allTime`}],
-                    [{text: "This year", callback_data: `statistics&year`}],
-                    [{text: "This month", callback_data: `statistics&month`}],
-                    [{text: "This week", callback_data: `statistics&week`}],
-                    [{text: "Today", callback_data: `statistics&today`}],
+                    [{text: "Year", callback_data: `statistics&year`}],
+                    [{text: "Month", callback_data: `statistics&month`}],
+                    [{text: "Week", callback_data: `statistics&week`}],
+                    [{text: "Day", callback_data: `statistics&day`}],
                 ]
             },
             reply_to_message_id: msg.reply_to_message ? msg.reply_to_message.message_id : msg.message_id,
             parse_mode: "Markdown",
         })
-        // let result = `Goal statistics of [${from.first_name}](tg://user?id=${from.id}) for all time:\n\n`
-        // for (let i = 0; i < goals.length; i++) {
-        //     let goal = goals[i];
-        //     let totalCount = await countService.getTotalCountByClientId(goal._id, from.id);
-        //     result += `${i + 1}. ${goal.name} - ${totalCount}\n`
-        // }
-        // await bot.sendMessage(chatId, result, {
-        //     parse_mode: "Markdown",
-        // });
     } catch (e) {
         console.error(e);
     }
+})
+
+bot.onText(/^\/top(10|[1-9]|)$/, async (msg, match) => {
+    if (msg.chat.type === "private") {
+        return await bot.sendMessage(msg.chat.id, "Here you are always the best", {
+            parse_mode: "HTML",
+        })
+    }
+    let maxRank = parseInt(match[1]) || 1;
+    if (maxRank > 10) {
+        maxRank = 10;
+    }
+    let result = await getTop(msg.chat.id, maxRank, "allTime", 0);
+    let text = "";
+    for (let o of result) {
+        text += `${bold(uppercaseStart(o.goal.name))}:\n${parseRankResult(o.counts)}\n`;
+    }
+    await bot.sendMessage(msg.chat.id, text, {
+        parse_mode: "HTML",
+    })
 })
 
 

@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 export interface GoalI {
+    _id: mongoose.Types.ObjectId,
     name: string,
     chatId: number
     createdBy: typeof mongoose.Types.ObjectId

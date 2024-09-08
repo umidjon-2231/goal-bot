@@ -27,8 +27,13 @@ app.post("/api/bot/:token", async (req, res) => {
         res.status(400).json({message: e})
     }
 })
-
-app.listen(PORT, async () => {
-    await mongoose.connect(MONGO_URL, {})
-    console.log(`Server is up and running on PORT ${PORT} to bot ${TELEGRAM_TOKEN.replace(/:(.+)/, "")}`)
-})
+if (process.env.NODE_ENV === "production") {
+    app.listen(PORT, async () => {
+        await mongoose.connect(MONGO_URL, {})
+        console.log(`Server is up and running on PORT ${PORT} to bot ${TELEGRAM_TOKEN.replace(/:(.+)/, "")}`)
+    })
+}else {
+    mongoose.connect(MONGO_URL, {}).then(()=>{
+        console.log(`Server is up and running on DEV to bot ${TELEGRAM_TOKEN.replace(/:(.+)/, "")}`)
+    })
+}

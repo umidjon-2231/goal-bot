@@ -4,9 +4,10 @@ import Count from "../models/Count";
 import {GoalI} from "../models/Goal";
 import {getTime} from "./timeService";
 import mongoose from "mongoose";
+import {CountRank} from "./rankService";
 
 
-const addCount = async (goalId: typeof mongoose.Types.ObjectId, fromId: string | number, amount = 0) => {
+const addCount = async (goalId: mongoose.Types.ObjectId, fromId: string | number, amount = 0) => {
     if (amount <= 0) {
         throw new Error("Amount cannot be less or equal to zero")
     }
@@ -27,7 +28,7 @@ const addCount = async (goalId: typeof mongoose.Types.ObjectId, fromId: string |
     return newCount.save();
 }
 
-const getTotalCountByClientId = async (goalId: typeof mongoose.Types.ObjectId, chatId: string | number) => {
+const getTotalCountByClientId = async (goalId: mongoose.Types.ObjectId, chatId: string | number) => {
     let goal = await goalService.getGoalById(goalId);
     if (!goal) {
         throw new Error("Goal not found")
@@ -43,7 +44,6 @@ const getTotalCountByClientId = async (goalId: typeof mongoose.Types.ObjectId, c
         {
             $group: {
                 _id: null,
-
                 totalAmount: {$sum: '$amount'}
             }
         }]);
@@ -51,7 +51,59 @@ const getTotalCountByClientId = async (goalId: typeof mongoose.Types.ObjectId, c
     return count[0]?.totalAmount ?? 0;
 }
 
-const getCountByClientIdAndTime = async (goalId: typeof mongoose.Types.ObjectId, fromId: string | number, fromDate: Date, toDate: Date) => {
+
+const getCountByGoal = async (goalId: mongoose.Types.ObjectId, limit: number, fromDate: Date, toDate: Date) => {
+    let goal = await goalService.getGoalById(goalId);
+    if (!goal) {
+        throw new Error("Goal not found")
+    }
+    return Count.aggregate<CountRank>([
+        {
+            $match: {
+                goal: goal._id,
+                createdTime: {
+                    $gte: fromDate,
+                    $lte: toDate,
+                }
+            },
+        },
+        {
+            $group: {
+                _id: "$client",
+                count: {$sum: '$amount'}
+            }
+        },
+        {
+            $sort: {
+                count: -1
+            }
+        },
+        {
+            $limit: limit
+        },
+        {
+            $lookup: {
+                from: "clients",
+                localField: "_id",
+                foreignField: "_id",
+                as: "clientDetails"
+            }
+        },
+        {
+            $unwind: "$clientDetails"
+        },
+        {
+            $project: {
+                _id: 1,
+                clientId: "$clientDetails.chatId",
+                count: 1,
+                fullName: "$clientDetails.fullName",
+            }
+        }
+    ]);
+}
+
+const getCountByClientIdAndTime = async (goalId: mongoose.Types.ObjectId, fromId: string | number, fromDate: Date, toDate: Date) => {
     let goal = await goalService.getGoalById(goalId);
     if (!goal) {
         throw new Error("Goal not found")
@@ -86,4 +138,4 @@ const printCount = (goal: GoalI, amount: number) => {
 }
 
 
-export default {addCount, getTotalCountByClientId, printCount, getCountByClientIdAndTime}
+export default {addCount, getTotalCountByClientId, printCount, getCountByClientIdAndTime, getCountByGoal}

@@ -1,16 +1,16 @@
 import mongoose from "mongoose";
 
-import Goal from "../models/Goal";
+import Goal, {GoalI} from "../models/Goal";
 import {getTime} from "./timeService";
 import {escapeRegex} from "./utils";
 
 const getAllGoalByChatId = async (chatId: string | number) => {
-    return Goal.find({chatId});
+    return Goal.find<GoalI>({chatId});
 }
 
 const getOldestGoalOfChat = async (chatId: string | number) => {
     let {_id} = await Goal.findOne({chatId}, {sort: {createdTime: 1}});
-    return Goal.findById(_id);
+    return Goal.findById<GoalI>(_id);
 }
 
 const addGoal = async (name: string, chatId: string | number, clientId: string|number) => {
@@ -27,7 +27,7 @@ const addGoal = async (name: string, chatId: string | number, clientId: string|n
     return newGoal.save();
 }
 
-const editGoalById = async (goalId: typeof mongoose.Types.ObjectId, newName: string) => {
+const editGoalById = async (goalId: mongoose.Types.ObjectId, newName: string) => {
     let goalById = await getGoalById(goalId);
     if (!goalById) {
         return null
@@ -35,7 +35,7 @@ const editGoalById = async (goalId: typeof mongoose.Types.ObjectId, newName: str
     return Goal.findByIdAndUpdate(goalId, {...goalById, name: newName})
 }
 
-const deleteGoalById = async (goalId: typeof mongoose.Types.ObjectId) => {
+const deleteGoalById = async (goalId: mongoose.Types.ObjectId) => {
     let goalById = await getGoalById(goalId);
     if (!goalById) {
         return null
@@ -50,7 +50,7 @@ const getGoalByNameAndChatId = async (name: string, chatId: string | number) => 
 }
 
 
-const getGoalById = async (goalId: typeof mongoose.Types.ObjectId) => {
+const getGoalById = async (goalId: mongoose.Types.ObjectId) => {
     return Goal.findById(goalId);
 }
 
