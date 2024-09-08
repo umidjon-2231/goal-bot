@@ -2,7 +2,7 @@ import countService from "./countService";
 import goalService from "./goalService";
 import timeService, {Period} from "./timeService";
 import {GoalI} from "../models/Goal";
-import {bold, italic} from "./utils";
+import {bold, italic, userUrl} from "./utils";
 
 export interface CountRank {
     count: number,
@@ -36,7 +36,7 @@ export const parseRankResult = (counts: CountRank[]) => {
         result = italic("No goal records found");
     } else {
         counts.forEach((ranker, i) => {
-            result += `${i + 1}. ${ranker.fullName} - ${bold(ranker.count.toString())} ${topStickers[i] ?? ""}\n`
+            result += `${i + 1}. ${userUrl(ranker.clientId, ranker.fullName)} - ${bold(ranker.count.toString())} ${topStickers[i] ?? ""}\n`
         })
     }
     return result;

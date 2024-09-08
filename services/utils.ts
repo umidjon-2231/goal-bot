@@ -14,3 +14,8 @@ export function bold(text: string) {
 export function italic(text: string) {
     return `<i>${text}</i>`;
 }
+
+
+export function userUrl(chatId: string|number, name: string){
+    return `<a href="tg://user?id=${chatId}">${name}</a>`
+}

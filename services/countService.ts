@@ -5,6 +5,7 @@ import {GoalI} from "../models/Goal";
 import {getTime} from "./timeService";
 import mongoose from "mongoose";
 import {CountRank} from "./rankService";
+import {bold, uppercaseStart} from "./utils";
 
 
 const addCount = async (goalId: mongoose.Types.ObjectId, fromId: string | number, amount = 0) => {
@@ -134,7 +135,7 @@ const getCountByClientIdAndTime = async (goalId: mongoose.Types.ObjectId, fromId
 
 
 const printCount = (goal: GoalI, amount: number) => {
-    return `${goal.name} - ${amount}`
+    return `${uppercaseStart(goal.name)} - ${bold(amount.toString())}`
 }
 
 

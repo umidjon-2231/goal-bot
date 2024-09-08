@@ -3,9 +3,10 @@ import goalService from "./goalService";
 import timeService, {parseDate, Period} from "./timeService";
 import TelegramBot from "node-telegram-bot-api";
 import {format, isThisWeek, isThisYear, isToday} from "date-fns";
+import {GoalI} from "../models/Goal";
 
 export const getStatistics = async (chatId: string | number, from: TelegramBot.User, period: Period, minus: number) => {
-    let result = []
+    let result: {goal: GoalI, amount: number}[] = []
     let goals = await goalService.getAllGoalByChatId(chatId);
     let oldestGoal = await goalService.getOldestGoalOfChat(chatId);
     console.log(oldestGoal.createdTime);
@@ -14,7 +15,10 @@ export const getStatistics = async (chatId: string | number, from: TelegramBot.U
         let amount = await countService.getCountByClientIdAndTime(goal._id, from.id, start, end);
         result.push({goal, amount})
     }
-    return result;
+    return result.sort((a, b) => {
+        let diff = a.amount - b.amount;
+        return diff===0?a.goal.name.localeCompare(b.goal.name):diff;
+    });
 }
 
 export const responsePeriodParser = (period: Period, minus: number): string => {

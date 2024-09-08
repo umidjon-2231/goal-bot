@@ -6,7 +6,7 @@ import {getStatistics, responsePeriodParser} from "./services/statisticService";
 import {Period} from "./services/timeService";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import {bold, uppercaseStart} from "./services/utils";
+import {bold, uppercaseStart, userUrl} from "./services/utils";
 import {getTop, parseRankResult} from "./services/rankService";
 
 dotenv.config()
@@ -65,20 +65,20 @@ bot.on("callback_query", async (query) => {
                 let goal = await goalService.getGoalById(goalId);
                 let count = await countService.addCount(goalId, fromId, amount);
                 if (count) {
-                    await bot.editMessageText(`[${query.from.first_name}](tg://user?id=${query.from.id}), new data recorded\n\n${goal.name} +${amount}`, {
+                    await bot.editMessageText(`${userUrl(query.from.id, query.from.first_name)}, new data recorded\n\n${goal.name} +${amount}`, {
                         message_id: query.message!.message_id,
                         chat_id: query.message!.chat.id,
-                        parse_mode: "Markdown",
+                        parse_mode: "HTML",
                     })
                 }
                 break;
             }
             case "statistics": {
                 let from = query.message!.reply_to_message!.from;
-                let minus = fields.length > 2 ? parseInt(fields[2]) : 0;
+                let minus = parseInt(fields[2]) || 0;
                 let period = fields[1] as Period;
                 let statistics = await getStatistics(query.message!.chat.id, from!, period, minus);
-                let response = `Statistics of [${from!.first_name}](tg://user?id=${from!.id}) for ${responsePeriodParser(period, minus)}:\n\n`;
+                let response = `Statistics of ${userUrl(from!.id, from!.first_name)} for ${responsePeriodParser(period, minus)}:\n\n`;
                 for (let i = 0; i < statistics.length; i++) {
                     let statistic = statistics[i];
                     response += `${i + 1}. ${countService.printCount(statistic.goal, statistic.amount)}\n`
@@ -103,8 +103,47 @@ bot.on("callback_query", async (query) => {
                     }
                 }
                 await bot.sendMessage(query.message!.chat.id, response, {
-                    parse_mode: "Markdown",
+                    parse_mode: "HTML",
                     reply_to_message_id: query.message!.reply_to_message!.message_id,
+                    reply_markup: {
+                        inline_keyboard: buttons
+                    }
+                })
+                break;
+            }
+            case "top": {
+                let period = fields[1] as Period;
+                let maxRank = parseInt(fields[2]) || 1;
+                if (maxRank > 10) {
+                    maxRank = 10;
+                }
+                let minus = parseInt(fields[3]) || 0;
+                let tops = await getTop(query.message.chat.id, maxRank, period, minus);
+                let response = `${bold("Top "+maxRank)} for ${bold(responsePeriodParser(period, minus))}:\n\n`;
+                for (let o of tops) {
+                    response += `${bold(uppercaseStart(o.goal.name))}:\n${parseRankResult(o.counts)}\n`;
+                }
+                let buttons: InlineKeyboardButton[][] = [[], []]
+                if (period !== "allTime") {
+                    buttons[0].push({
+                        text: "Previous " + fields[1] + " (" + responsePeriodParser(period, minus + 1) + ")",
+                        callback_data: [fields[0], fields[1], maxRank, minus + 1].join("&")
+                    })
+                    if (minus > 0) {
+                        buttons[0].push({
+                            text: "Next " + fields[1] + " (" + responsePeriodParser(period, minus - 1) + ")",
+                            callback_data: [fields[0], fields[1], maxRank, minus - 1].join("&")
+                        })
+                        if (minus > 1) {
+                            buttons[1].push({
+                                text: uppercaseStart(responsePeriodParser(period, 0)),
+                                callback_data: [fields[0], fields[1], maxRank, 0].join("&")
+                            })
+                        }
+                    }
+                }
+                await bot.sendMessage(query.message!.chat.id, response, {
+                    parse_mode: "HTML",
                     reply_markup: {
                         inline_keyboard: buttons
                     }
@@ -209,12 +248,11 @@ bot.onText(/\/count (.+) (\d+)/, async (msg, match) => {
             })
             return;
         }
-        console.log(`count&${msg.from!.id}&${goal._id}&${amount}`)
         await bot.sendMessage(chatId,
-            `[${msg.from!.first_name}](tg://user?id=${msg.from!.id}), confirm adding new record:\n\n${goal.name} +${amount}`, {
+            `${userUrl(msg.from!.id, msg.from!.first_name)}, confirm adding new record:\n\n${goal.name} +${amount}`, {
                 reply_to_message_id: msg.message_id,
                 allow_sending_without_reply: true,
-                parse_mode: "Markdown",
+                parse_mode: "HTML",
                 reply_markup: {
                     inline_keyboard: [[
                         {text: "Cancel", callback_data: "cancel"},
@@ -237,7 +275,7 @@ bot.onText(/\/statistics/, async (msg) => {
             await bot.sendMessage(chatId, "There no any goals!")
             return;
         }
-        await bot.sendMessage(chatId, `Please choose period of [${from!.first_name}](tg://user?id=${from!.id}):`, {
+        await bot.sendMessage(chatId, `Please choose period for ${userUrl(from!.id, from!.first_name)}'s statistics:`, {
             reply_markup: {
                 inline_keyboard: [
                     [{text: "All time", callback_data: `statistics&allTime`}],
@@ -248,31 +286,47 @@ bot.onText(/\/statistics/, async (msg) => {
                 ]
             },
             reply_to_message_id: msg.reply_to_message ? msg.reply_to_message.message_id : msg.message_id,
-            parse_mode: "Markdown",
+            parse_mode: "HTML",
         })
     } catch (e) {
         console.error(e);
     }
 })
 
+
 bot.onText(/^\/top(10|[1-9]|)/, async (msg, match) => {
-    if (msg.chat.type === "private") {
-        return await bot.sendMessage(msg.chat.id, "Here you are always the best", {
+    try {
+        if (msg.chat.type === "private") {
+            return await bot.sendMessage(msg.chat.id, "Here you are always the best🏆", {
+                parse_mode: "HTML",
+            })
+        }
+        let maxRank = parseInt(match[1]) || 1;
+        if (maxRank > 10) {
+            maxRank = 10;
+        }
+        let chatId = msg.chat.id;
+        let goals = await goalService.getAllGoalByChatId(chatId);
+        if (goals.length === 0) {
+            await bot.sendMessage(chatId, "There no any goals!")
+            return;
+        }
+        await bot.sendMessage(chatId, `Please choose period for ${bold("Top "+maxRank)}`, {
             parse_mode: "HTML",
+            reply_markup: {
+                inline_keyboard: [
+                    [{text: "All time", callback_data: `top&allTime&${maxRank}`}],
+                    [{text: "Year", callback_data: `top&year&${maxRank}`}],
+                    [{text: "Month", callback_data: `top&month&${maxRank}`}],
+                    [{text: "Week", callback_data: `top&week&${maxRank}`}],
+                    [{text: "Day", callback_data: `top&day&${maxRank}`}],
+                ]
+            },
+            reply_to_message_id: msg.reply_to_message ? msg.reply_to_message.message_id : msg.message_id,
         })
+    } catch (e) {
+        console.error(e);
     }
-    let maxRank = parseInt(match[1]) || 1;
-    if (maxRank > 10) {
-        maxRank = 10;
-    }
-    let result = await getTop(msg.chat.id, maxRank, "allTime", 0);
-    let text = "";
-    for (let o of result) {
-        text += `${bold(uppercaseStart(o.goal.name))}:\n${parseRankResult(o.counts)}\n`;
-    }
-    await bot.sendMessage(msg.chat.id, text, {
-        parse_mode: "HTML",
-    })
 })
 
 
