@@ -2,8 +2,12 @@ import dotenv from 'dotenv'
 import express from 'express';
 import mongoose from "mongoose";
 import bot from "./bot";
+import {setDefaultOptions} from "date-fns";
 
 dotenv.config()
+setDefaultOptions({
+    weekStartsOn: 1,
+})
 const app = express()
 
 const PORT = process.env.PORT || 4000

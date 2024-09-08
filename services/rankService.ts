@@ -31,7 +31,7 @@ export const parseRankResult = (counts: CountRank[]) => {
     let result = ""
     if (counts.length === 1) {
         let first = counts[0];
-        result = `${first.fullName} - ${bold(first.count.toString())} ${topStickers[0]}`
+        result = `${first.fullName} - ${bold(first.count.toString())} ${topStickers[0]}\n`
     } else if (counts.length === 0) {
         result = italic("No goal records found");
     } else {
