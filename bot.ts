@@ -9,6 +9,7 @@ import dotenv from "dotenv";
 import {bold, uppercaseStart, userUrl} from "./services/utils";
 import {getTop, parseRankResult} from "./services/rankService";
 import {turnNotification} from "./services/notificationService";
+import {getQuoteOfDay} from "./services/aiService";
 import {ms} from "date-fns/locale";
 
 dotenv.config()
@@ -21,8 +22,24 @@ const bot = new TelegramBot(TELEGRAM_TOKEN, {
     polling: process.env.NODE_ENV === 'development',
 });
 
-bot.on("message", (msg) => {
+bot.on("message", async (msg) => {
     console.log(`New message from ${msg.from!.id} in chat ${msg.chat.id}`)
+    const client = await clientService.getClientByChatId(msg.from.id);
+    if (client){
+        if (client.fullName!==msg.from.first_name || client.username!==msg.from.username){
+            await clientService.updateClient({
+                chatId: msg.chat.id,
+                fullName: msg.from!.first_name,
+                username: msg.from!.username || '',
+            })
+        }
+    }else {
+        await clientService.addClient({
+            chatId: msg.chat.id,
+            fullName: msg.from!.first_name,
+            username: msg.from!.username || '',
+        })
+    }
 })
 
 bot.on("callback_query", async (query) => {
@@ -32,8 +49,8 @@ bot.on("callback_query", async (query) => {
     try {
         switch (fields[0]) {
             case "cancel": {
-                let fromId = fields[1]
-                if (fromId !== query.from.id + "") {
+                let fromId = query.message.reply_to_message.from.id
+                if (fromId !== query.from.id) {
                     await bot.answerCallbackQuery(query.id, {
                         text: "It is not your button!",
                         show_alert: true,
@@ -336,14 +353,20 @@ bot.onText(/^\/notification_(off|on)/, async (msg, match) => {
     if (msg.chat.type === "private") {
         return await bot.sendMessage(msg.chat.id, "Private chats don't support notification!")
     }
-    if (match[1]==="on"){
+    if (match[1] === "on") {
         await turnNotification(msg.chat.id.toString(), true)
-    }else if(match[2]==="off"){
+    } else if (match[2] === "off") {
         await turnNotification(msg.chat.id.toString(), false)
     }
-    return await bot.sendMessage(msg.chat.id,"Notification turned "+match[1], {
+    return await bot.sendMessage(msg.chat.id, "Notification turned " + match[1], {
         reply_to_message_id: msg.message_id
     })
+})
+
+
+bot.onText(/\/quote/, async (msg) => {
+    let quoteOfDay = await getQuoteOfDay();
+    return bot.sendMessage(msg.chat.id, quoteOfDay)
 })
 
 

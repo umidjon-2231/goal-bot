@@ -36,7 +36,7 @@ app.post("/api/bot/:token", async (req, res) => {
 })
 
 cron.schedule("0 0 * * *", async () => {
-    await sendNotification(3, "week", isMonday(getTime())?1:0);
+    await sendNotification(3, "week", isMonday(getTime()) ? 1 : 0);
 })
 
 cron.schedule("0 0 * * 1", async () => {
@@ -50,8 +50,11 @@ cron.schedule("0 0 1 * *", async () => {
 if (process.env.NODE_ENV === "development") {
     mongoose.connect(MONGO_URL, {}).then(() => {
         console.log(`Server is up and running on DEV to bot ${TELEGRAM_TOKEN.replace(/:(.+)/, "")}`)
+
+        bot.getMe().then((me) => {
+            console.log("listening to bot @" + me.username)
+        })
     })
-    sendNotification(3, "allTime").then();
 } else {
     app.listen(PORT, async () => {
         await mongoose.connect(MONGO_URL, {})

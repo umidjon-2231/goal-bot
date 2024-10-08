@@ -23,9 +23,19 @@ const addClient = async ({chatId, fullName, username}: {
     return newClient.save()
 }
 
+const updateClient = async ({chatId, fullName, username}: {
+    chatId: string | number,
+    fullName: string,
+    username: string
+}) => {
+    return Client.findOneAndUpdate({chatId}, {
+        fullName, username
+    });
+}
+
 const getClientByChatId = async (chatId: string | number) => {
     return Client.findOne({chatId});
 }
 
 
-export default {existByChatId: existById, addClient, getClientByChatId}
+export default {existByChatId: existById, addClient, getClientByChatId, updateClient}
