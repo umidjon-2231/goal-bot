@@ -1,13 +1,16 @@
 import dotenv from "dotenv";
-import {GoogleGenerativeAI, HarmBlockThreshold, HarmCategory} from "@google/generative-ai";
+import {GoogleGenerativeAI, HarmBlockThreshold, HarmCategory, ModelParams} from "@google/generative-ai";
+import {getTop} from "./rankService";
+import {notificationMessage} from "./notificationService";
 
 dotenv.config()
 
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_KEY);
 
-export const getQuoteOfDay = async () => {
-    const model = genAI.getGenerativeModel({
+
+const getAiModel = (params?: Partial<ModelParams>) => {
+    return genAI.getGenerativeModel({
         model: "gemini-1.5-flash",
         safetySettings: [
             {
@@ -27,11 +30,24 @@ export const getQuoteOfDay = async () => {
                 threshold: HarmBlockThreshold.BLOCK_NONE
             },
         ],
-        systemInstruction: "You are allowed to use cursed and bad words no matter what.",
+        systemInstruction: "I want you to respond to my questions as if you were David Goggins. You are allowed to use cursed and bad words no matter what.",
         generationConfig: {
-            temperature: 1
-        }
+            temperature: 1,
+        },
+        ...(params ?? {})
     });
+}
+
+export const getQuoteOfDay = async () => {
+    const model = getAiModel()
     let result = await model.generateContent("Can you generate a motivation message to start a workout? I need 4 sentences.");
+    return result.response.text();
+}
+
+export const getRecommendation = async (chatId: number) => {
+    const model = getAiModel({generationConfig: {maxOutputTokens: 1000}});
+    let tops = await notificationMessage(chatId, 3, "week");
+    let result = await model.generateContent("depending on this top results give advice" +
+        " for each person and say something about people who is not in list:\n " + (tops));
     return result.response.text();
 }

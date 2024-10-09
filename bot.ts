@@ -8,9 +8,8 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import {bold, uppercaseStart, userUrl} from "./services/utils";
 import {getTop, parseRankResult} from "./services/rankService";
-import {turnNotification} from "./services/notificationService";
-import {getQuoteOfDay} from "./services/aiService";
-import {ms} from "date-fns/locale";
+import {notificationMessage, turnNotification} from "./services/notificationService";
+import {getQuoteOfDay, getRecommendation} from "./services/aiService";
 
 dotenv.config()
 
@@ -25,15 +24,15 @@ const bot = new TelegramBot(TELEGRAM_TOKEN, {
 bot.on("message", async (msg) => {
     console.log(`New message from ${msg.from!.id} in chat ${msg.chat.id}`)
     const client = await clientService.getClientByChatId(msg.from.id);
-    if (client){
-        if (client.fullName!==msg.from.first_name || client.username!==msg.from.username){
+    if (client) {
+        if (client.fullName !== msg.from.first_name || client.username !== msg.from.username) {
             await clientService.updateClient({
-                chatId: msg.chat.id,
+                chatId: msg.from.id,
                 fullName: msg.from!.first_name,
                 username: msg.from!.username || '',
             })
         }
-    }else {
+    } else {
         await clientService.addClient({
             chatId: msg.chat.id,
             fullName: msg.from!.first_name,
@@ -367,6 +366,18 @@ bot.onText(/^\/notification_(off|on)/, async (msg, match) => {
 bot.onText(/\/quote/, async (msg) => {
     let quoteOfDay = await getQuoteOfDay();
     return bot.sendMessage(msg.chat.id, quoteOfDay)
+})
+
+bot.onText(/\/rec/, async (msg) => {
+    let quoteOfDay = await getRecommendation(msg.chat.id);
+    const response = await notificationMessage(msg.chat.id, 3, "week")
+    let message = await bot.sendMessage(msg.chat.id, response, {
+        parse_mode: "HTML"
+    });
+    return bot.sendMessage(msg.chat.id, quoteOfDay, {
+        parse_mode: "Markdown",
+        reply_to_message_id: message.message_id,
+    })
 })
 
 
