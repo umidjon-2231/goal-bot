@@ -369,7 +369,7 @@ bot.onText(/\/quote/, async (msg) => {
 })
 
 bot.onText(/\/rec/, async (msg) => {
-    let quoteOfDay = await getRecommendation(msg.chat.id);
+    let quoteOfDay = await getRecommendation(msg.chat.id, 3, "week");
     const response = await notificationMessage(msg.chat.id, 3, "week")
     let message = await bot.sendMessage(msg.chat.id, response, {
         parse_mode: "HTML"

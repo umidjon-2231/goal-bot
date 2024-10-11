@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import {GoogleGenerativeAI, HarmBlockThreshold, HarmCategory, ModelParams} from "@google/generative-ai";
-import {getTop} from "./rankService";
 import {notificationMessage} from "./notificationService";
+import {Period} from "./timeService";
 
 dotenv.config()
 
@@ -44,10 +44,13 @@ export const getQuoteOfDay = async () => {
     return result.response.text();
 }
 
-export const getRecommendation = async (chatId: number) => {
+export const getRecommendation = async (chatId: number, maxRank: number, period: Period, minus: number = 0) => {
     const model = getAiModel({generationConfig: {maxOutputTokens: 1000}});
-    let tops = await notificationMessage(chatId, 3, "week");
-    let result = await model.generateContent("depending on this top results give advice" +
-        " for each person and say something about people who is not in list:\n " + (tops));
+    let tops = await notificationMessage(chatId, maxRank, period, minus);
+    let result = await model.generateContent(
+        "I will give you record of progress of each people and depending on this you need to give advice" +
+        " for each person and say something about people who is not in list." +
+        " If it is written that there 'no goal records found' it means that nobody did this particular goal. " +
+        "This is LIST:\n " + (tops));
     return result.response.text();
 }

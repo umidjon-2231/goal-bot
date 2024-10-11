@@ -16,7 +16,7 @@ export const sendNotification = async (maxRank: number, period: Period, minus: n
             let message = await bot.sendMessage(chat._id, response, {
                 parse_mode: "HTML"
             });
-            const rec = await getRecommendation(chat._id)
+            const rec = await getRecommendation(chat._id, maxRank, period, minus)
             return bot.sendMessage(chat._id, rec, {
                 reply_to_message_id: message.message_id,
             })
