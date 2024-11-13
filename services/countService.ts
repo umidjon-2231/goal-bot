@@ -145,11 +145,11 @@ const reactionForCount = (amount: number) => {
     } else if (amount < 50) {
         return "👍"
     } else if (amount < 100) {
-        return "🔥"
+        return "⚡"
     } else if (amount<150){
-        return "💪"
+        return "🔥"
     }
-    return "🚀"
+    return "❤‍🔥"
 }
 
 
