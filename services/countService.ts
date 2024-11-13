@@ -139,4 +139,25 @@ const printCount = (goal: GoalI, amount: number) => {
 }
 
 
-export default {addCount, getTotalCountByClientId, printCount, getCountByClientIdAndTime, getCountByGoal}
+const reactionForCount = (amount: number) => {
+    if (amount < 10) {
+        return "👎"
+    } else if (amount < 50) {
+        return "👍"
+    } else if (amount < 100) {
+        return "🔥"
+    } else if (amount<150){
+        return "💪"
+    }
+    return "🚀"
+}
+
+
+export default {
+    addCount,
+    getTotalCountByClientId,
+    printCount,
+    getCountByClientIdAndTime,
+    getCountByGoal,
+    reactionForCount,
+}

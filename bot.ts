@@ -1,4 +1,4 @@
-import TelegramBot, {InlineKeyboardButton} from "node-telegram-bot-api";
+import TelegramBot from "node-telegram-bot-api";
 import clientService from "./services/clientService";
 import goalService from "./services/goalService";
 import countService from "./services/countService";
@@ -10,6 +10,7 @@ import {bold, uppercaseStart, userUrl} from "./services/utils";
 import {getTop, parseRankResult} from "./services/rankService";
 import {notificationMessage, turnNotification} from "./services/notificationService";
 import {getQuoteOfDay, getRecommendation} from "./services/aiService";
+import axios from "axios";
 
 dotenv.config()
 
@@ -88,6 +89,12 @@ bot.on("callback_query", async (query) => {
                         chat_id: query.message!.chat.id,
                         parse_mode: "HTML",
                     })
+                    await axios.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/setMessageReaction`, {
+                        chat_id: query.message.chat.id,
+                        message_id: query.message.reply_to_message.message_id,
+                        reaction: [countService.reactionForCount(amount)],
+                        is_big: true,
+                    }).catch(console.error)
                 }
                 break;
             }
@@ -101,7 +108,7 @@ bot.on("callback_query", async (query) => {
                     let statistic = statistics[i];
                     response += `${i + 1}. ${countService.printCount(statistic.goal, statistic.amount)}\n`
                 }
-                let buttons: InlineKeyboardButton[][] = [[], []]
+                let buttons: TelegramBot.InlineKeyboardButton[][] = [[], []]
                 if (period !== "allTime") {
                     buttons[0].push({
                         text: "Previous " + fields[1] + " (" + responsePeriodParser(period, minus + 1) + ")",
@@ -141,7 +148,7 @@ bot.on("callback_query", async (query) => {
                 for (let o of tops) {
                     response += `${bold(uppercaseStart(o.goal.name))}:\n${parseRankResult(o.counts)}\n`;
                 }
-                let buttons: InlineKeyboardButton[][] = [[], []]
+                let buttons: TelegramBot.InlineKeyboardButton[][] = [[], []]
                 if (period !== "allTime") {
                     buttons[0].push({
                         text: "Previous " + fields[1] + " (" + responsePeriodParser(period, minus + 1) + ")",
