@@ -92,7 +92,12 @@ bot.on("callback_query", async (query) => {
                     await axios.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/setMessageReaction`, {
                         chat_id: query.message.chat.id,
                         message_id: query.message.reply_to_message.message_id,
-                        reaction: [countService.reactionForCount(amount)],
+                        reaction: [
+                            {
+                                type: "emoji",
+                                emoji: countService.reactionForCount(amount),
+                            }
+                        ],
                         is_big: true,
                     }).catch(console.error)
                 }
