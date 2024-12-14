@@ -389,7 +389,11 @@ const getStreakByClientIdAndGoalId = async (fromId: string | number, goalId: mon
         }
     ]);
 
-    return streak[0];
+    return streak[0]??{
+        streaks: [],
+        longestStreak: {start: "", end: "", length: 0},
+        currentStreak: {start: "", length: 0}
+    };
 }
 
 
