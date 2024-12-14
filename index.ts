@@ -52,8 +52,15 @@ if (process.env.NODE_ENV === "development") {
         console.log(`Server is up and running on DEV to bot ${TELEGRAM_TOKEN.replace(/:(.+)/, "")}`)
 
         bot.getMe().then((me) => {
-            console.log("listening to bot @" + me.username)
+            console.log("Listening to bot @" + me.username)
         })
+        bot.startPolling({
+            polling: {
+                params: {
+                    allowed_updates: ["message", "callback_query"]
+                }
+            }
+        }).then()
     })
 } else {
     app.listen(PORT, async () => {

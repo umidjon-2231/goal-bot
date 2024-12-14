@@ -3,10 +3,10 @@ import clientService from "./services/clientService";
 import goalService from "./services/goalService";
 import countService from "./services/countService";
 import {getStatistics, responsePeriodParser} from "./services/statisticService";
-import {Period} from "./services/timeService";
+import timeService, {parseDate, Period} from "./services/timeService";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import {bold, uppercaseStart, userUrl} from "./services/utils";
+import {bold, italic, uppercaseStart, userUrl} from "./services/utils";
 import {getTop, parseRankResult} from "./services/rankService";
 import {notificationMessage, turnNotification} from "./services/notificationService";
 import {getQuoteOfDay, getRecommendation} from "./services/aiService";
@@ -17,10 +17,7 @@ dotenv.config()
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || '';
 console.log(process.env.NODE_ENV)
 
-const bot = new TelegramBot(TELEGRAM_TOKEN, {
-    webHook: process.env.NODE_ENV !== 'development',
-    polling: process.env.NODE_ENV === 'development',
-});
+const bot = new TelegramBot(TELEGRAM_TOKEN, {});
 
 bot.on("message", async (msg) => {
     console.log(`New message from ${msg.from!.id} in chat ${msg.chat.id}`)
@@ -43,6 +40,7 @@ bot.on("message", async (msg) => {
 })
 
 bot.on("callback_query", async (query) => {
+    console.log(`New callback query from ${query.from!.id} in chat ${query.message.chat.id}`)
     console.log(query)
     let fields = query.data!.split("&");
     console.log(fields)
@@ -359,6 +357,39 @@ bot.onText(/^\/top(10|[1-9]|)/, async (msg, match) => {
     }
 })
 
+bot.onText(/^\/streak/, async (msg) => {
+    try {
+        let chatId = msg.chat.id,
+            from = msg.reply_to_message ? msg.reply_to_message.from : msg.from;
+        let goals = await goalService.getAllGoalByChatId(chatId);
+        if (goals.length === 0) {
+            await bot.sendMessage(chatId, "There no any goals!")
+            return;
+        }
+
+        let response = `Streak of ${userUrl(from!.id, from!.first_name)}:\n`;
+
+        const result=await Promise.all(goals.map(async (goal) =>
+            countService.getStrikeByClientIdAndGoalId(from!.id, goal._id)))
+        console.log(result)
+        for (let i = 0; i < result.length; i++) {
+            let streak = result[i];
+            response += `\n${bold(uppercaseStart(goals[i].name))}:\n${italic("Current streak:")}`+
+            `\nDays: ${streak.currentStreak.length}\n`+
+                (streak.currentStreak.length>0? `Started date: ${parseDate(new Date(streak.currentStreak.start))}\n`:"")+
+                `${italic("Longest streak:")} \nDays: ${streak.longestStreak.length}\n`+
+                (streak.longestStreak.length>0? `Started date: ${parseDate(new Date(streak.longestStreak.start))??"No streak"}\n`+
+                `Ended date: ${parseDate(new Date(streak.longestStreak.end))??"No streak"}\n`:"")
+        }
+        await bot.sendMessage(chatId, response, {
+            reply_to_message_id: msg.message_id,
+            allow_sending_without_reply: true,
+            parse_mode: "HTML",
+        })
+    } catch (e) {
+        console.error(e)
+    }
+})
 
 bot.onText(/^\/notification_(off|on)/, async (msg, match) => {
     if (msg.chat.type === "private") {
