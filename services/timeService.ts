@@ -1,9 +1,11 @@
 import {
+    differenceInDays,
     endOfDay,
     endOfMonth,
     endOfWeek,
     endOfYear,
-    format,
+    format, getDaysInMonth,
+    getDaysInYear,
     isThisYear,
     startOfDay,
     startOfMonth,
@@ -28,7 +30,7 @@ export const getYearStartAndEnd = (minus = 0) => {
     if (minus > 0) {
         time = subYears(time, minus);
     }
-    return {start: startOfYear(time), end: endOfYear(time)}
+    return {start: startOfYear(time), end: endOfYear(time), days: getDaysInYear(time)}
 }
 
 export const getMonthStartAndEnd = (minus = 0) => {
@@ -36,7 +38,7 @@ export const getMonthStartAndEnd = (minus = 0) => {
     if (minus > 0) {
         time = subMonths(time, minus);
     }
-    return {start: startOfMonth(time), end: endOfMonth(time)}
+    return {start: startOfMonth(time), end: endOfMonth(time), days: getDaysInMonth(time)}
 }
 
 export const getWeekStartAndEnd = (minus = 0) => {
@@ -44,7 +46,7 @@ export const getWeekStartAndEnd = (minus = 0) => {
     if (minus > 0) {
         time = subWeeks(time, minus);
     }
-    return {start: startOfWeek(time), end: endOfWeek(time)}
+    return {start: startOfWeek(time), end: endOfWeek(time), days: 7}
 }
 
 export const getDayStartAndEnd = (minus = 0) => {
@@ -53,7 +55,7 @@ export const getDayStartAndEnd = (minus = 0) => {
     if (minus > 0) {
         time = subDays(time, minus);
     }
-    return {start: startOfDay(time), end: endOfDay(time)}
+    return {start: startOfDay(time), end: endOfDay(time), days: 1}
 }
 
 export const periodToStartAndEndDate = (period: Period, minus = 0, goalCreatedTime = new Date()) => {
@@ -74,7 +76,7 @@ export const periodToStartAndEndDate = (period: Period, minus = 0, goalCreatedTi
             return getDayStartAndEnd(minus)
         }
         default: {
-            return {start: goalCreatedTime, end: getTime()}
+            return {start: goalCreatedTime, end: getTime(), days: differenceInDays(goalCreatedTime, getTime())}
         }
     }
 }

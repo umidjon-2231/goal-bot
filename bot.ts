@@ -6,11 +6,12 @@ import {getStatistics, responsePeriodParser} from "./services/statisticService";
 import timeService, {parseDate, Period} from "./services/timeService";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import {bold, italic, uppercaseStart, userUrl} from "./services/utils";
+import {bold, italic, periodButton, uppercaseStart, userUrl} from "./services/utils";
 import {getTop, parseRankResult} from "./services/rankService";
 import {notificationMessage, turnNotification} from "./services/notificationService";
 import {getQuoteOfDay, getRecommendation} from "./services/aiService";
 import axios from "axios";
+import streakService from "./services/streakService";
 
 dotenv.config()
 
@@ -41,9 +42,7 @@ bot.on("message", async (msg) => {
 
 bot.on("callback_query", async (query) => {
     console.log(`New callback query from ${query.from!.id} in chat ${query.message.chat.id}`)
-    console.log(query)
     let fields = query.data!.split("&");
-    console.log(fields)
     try {
         switch (fields[0]) {
             case "cancel": {
@@ -111,30 +110,12 @@ bot.on("callback_query", async (query) => {
                     let statistic = statistics[i];
                     response += `${i + 1}. ${countService.printCount(statistic.goal, statistic.amount)}\n`
                 }
-                let buttons: TelegramBot.InlineKeyboardButton[][] = [[], []]
-                if (period !== "allTime") {
-                    buttons[0].push({
-                        text: "Previous " + fields[1] + " (" + responsePeriodParser(period, minus + 1) + ")",
-                        callback_data: [fields[0], fields[1], minus + 1].join("&")
-                    })
-                    if (minus > 0) {
-                        buttons[0].push({
-                            text: "Next " + fields[1] + " (" + responsePeriodParser(period, minus - 1) + ")",
-                            callback_data: [fields[0], fields[1], minus - 1].join("&")
-                        })
-                        if (minus > 1) {
-                            buttons[1].push({
-                                text: uppercaseStart(responsePeriodParser(period, 0)),
-                                callback_data: [fields[0], fields[1], 0].join("&")
-                            })
-                        }
-                    }
-                }
+
                 await bot.sendMessage(query.message!.chat.id, response, {
                     parse_mode: "HTML",
                     reply_to_message_id: query.message!.reply_to_message!.message_id,
                     reply_markup: {
-                        inline_keyboard: buttons
+                        inline_keyboard: periodButton(fields, period, minus)
                     }
                 })
                 break;
@@ -151,29 +132,30 @@ bot.on("callback_query", async (query) => {
                 for (let o of tops) {
                     response += `${bold(uppercaseStart(o.goal.name))}:\n${parseRankResult(o.counts)}\n`;
                 }
-                let buttons: TelegramBot.InlineKeyboardButton[][] = [[], []]
-                if (period !== "allTime") {
-                    buttons[0].push({
-                        text: "Previous " + fields[1] + " (" + responsePeriodParser(period, minus + 1) + ")",
-                        callback_data: [fields[0], fields[1], maxRank, minus + 1].join("&")
-                    })
-                    if (minus > 0) {
-                        buttons[0].push({
-                            text: "Next " + fields[1] + " (" + responsePeriodParser(period, minus - 1) + ")",
-                            callback_data: [fields[0], fields[1], maxRank, minus - 1].join("&")
-                        })
-                        if (minus > 1) {
-                            buttons[1].push({
-                                text: uppercaseStart(responsePeriodParser(period, 0)),
-                                callback_data: [fields[0], fields[1], maxRank, 0].join("&")
-                            })
-                        }
-                    }
-                }
                 await bot.sendMessage(query.message!.chat.id, response, {
                     parse_mode: "HTML",
                     reply_markup: {
-                        inline_keyboard: buttons
+                        inline_keyboard: periodButton(fields, period, minus)
+                    }
+                })
+                break;
+            }
+            case "missed": {
+                let from = query.message!.reply_to_message!.from;
+                let minus = parseInt(fields[2]) || 0;
+                let period = fields[1] as Period;
+                let result = await streakService.getMissedDaysByClientId(query.message!.chat.id, from!.id, period, minus);
+                let response = `Missed days of ${userUrl(from!.id, from!.first_name)} for ${responsePeriodParser(period, minus)}:\n`;
+                for (let i = 0; i < result.length; i++) {
+                    let missed = result[i];
+                    response += `\n${bold(uppercaseStart(missed.goal.name))}:\n${missed.notMissedDays} of ${missed.total}\n`+
+                        `Missed: ${bold(missed.missedDays)} (${Math.round((missed.missedDays/missed.total)*100)}%)\n`
+                }
+                await bot.sendMessage(query.message!.chat.id, response, {
+                    parse_mode: "HTML",
+                    reply_to_message_id: query.message!.reply_to_message!.message_id,
+                    reply_markup: {
+                        inline_keyboard: periodButton(fields, period, minus)
                     }
                 })
                 break;
@@ -370,12 +352,16 @@ bot.onText(/^\/streak/, async (msg) => {
         let response = `Streak of ${userUrl(from!.id, from!.first_name)}:\n`;
 
         const result=await Promise.all(goals.map(async (goal) =>
-            countService.getStrikeByClientIdAndGoalId(from!.id, goal._id)))
+            streakService.getStreakByClientIdAndGoalId(from!.id, goal._id)))
         console.log(result)
         for (let i = 0; i < result.length; i++) {
             let streak = result[i];
+            if (!streak || streak.longestStreak.length === 0) {
+                response += `\n${bold(uppercaseStart(goals[i].name))}:\n${italic("No streak")}`
+                continue;
+            }
             response += `\n${bold(uppercaseStart(goals[i].name))}:\n${italic("Current streak:")}`+
-            `\nDays: ${streak.currentStreak.length}\n`+
+                (streak.currentStreak.length>0?`\nDays: ${streak.currentStreak.length}\n`:"No\n")+
                 (streak.currentStreak.length>0? `Started date: ${parseDate(new Date(streak.currentStreak.start))}\n`:"")+
                 `${italic("Longest streak:")} \nDays: ${streak.longestStreak.length}\n`+
                 (streak.longestStreak.length>0? `Started date: ${parseDate(new Date(streak.longestStreak.start))??"No streak"}\n`+
@@ -388,6 +374,31 @@ bot.onText(/^\/streak/, async (msg) => {
         })
     } catch (e) {
         console.error(e)
+    }
+})
+
+bot.onText(/^\/missed/, async (msg) => {
+    try {
+        let chatId = msg.chat.id;
+        let goals = await goalService.getAllGoalByChatId(chatId);
+        let from = msg.reply_to_message ? msg.reply_to_message.from : msg.from;
+        if (goals.length === 0) {
+            await bot.sendMessage(chatId, "There no any goals!")
+            return;
+        }
+        await bot.sendMessage(chatId, `Please choose period for ${userUrl(from!.id, from!.first_name)}'s missed days:`, {
+            reply_markup: {
+                inline_keyboard: [
+                    [{text: "Year", callback_data: `missed&year`}],
+                    [{text: "Month", callback_data: `missed&month`}],
+                    [{text: "Week", callback_data: `missed&week`}],
+                ]
+            },
+            reply_to_message_id: msg.reply_to_message ? msg.reply_to_message.message_id : msg.message_id,
+            parse_mode: "HTML",
+        })
+    } catch (e) {
+        console.error(e);
     }
 })
 

@@ -40,11 +40,11 @@ cron.schedule("0 0 * * *", async () => {
 })
 
 cron.schedule("0 0 * * 1", async () => {
-    await sendNotification(3, "week", isMonday(getTime()) ? 1 : 0);
+    await sendNotification(3, "week", isMonday(getTime()) ? 1 : 0, false);
 })
 
 cron.schedule("0 0 1 * *", async () => {
-    await sendNotification(3, "month", 1);
+    await sendNotification(3, "month", 1, false);
 })
 
 if (process.env.NODE_ENV === "development") {

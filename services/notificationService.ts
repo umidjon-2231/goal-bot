@@ -7,7 +7,7 @@ import bot from "../bot";
 import Goal from "../models/Goal";
 import {getRecommendation} from "./aiService";
 
-export const sendNotification = async (maxRank: number, period: Period, minus: number = 0) => {
+export const sendNotification = async (maxRank: number, period: Period, minus: number = 0, sendAi: boolean = true) => {
     let chats = await getChatsNotificationOn();
     let queue: Promise<any>[] = []
     for (const chat of chats) {
@@ -16,6 +16,9 @@ export const sendNotification = async (maxRank: number, period: Period, minus: n
             let message = await bot.sendMessage(chat._id, response, {
                 parse_mode: "HTML"
             });
+            if (!sendAi) {
+                return;
+            }
             const rec = await getRecommendation(chat._id, maxRank, period, minus)
             return bot.sendMessage(chat._id, rec, {
                 reply_to_message_id: message.message_id,
