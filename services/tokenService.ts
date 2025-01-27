@@ -46,7 +46,7 @@ const verifyToken = async (tokenId: mongoose.Types.ObjectId, clientId: string | 
 
 
 const getToken = async (tokenId: string): Promise<AuthInfo | null> => {
-    let searchParams: mongoose.RootFilterQuery<any>;
+    let searchParams: {};
     if (tokenId.length === 64) {
         searchParams = {token: tokenId}
     } else {
