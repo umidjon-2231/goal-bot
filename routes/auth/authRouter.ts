@@ -31,7 +31,7 @@ authRouter.get<{ token: string }>("/token/:token", async (req, res) => {
             return handleServiceResponse(ServiceResponse.failure("Token not found"), res)
         }
         return handleServiceResponse(ServiceResponse.success("Token found", {
-            ...token["_doc"],
+            ...(token),
             loginUrl: `https://t.me/${(await bot.getMe()).username}?start=${token.token}`
         }), res)
     } catch (e) {
