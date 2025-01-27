@@ -3,7 +3,6 @@ import {DeviceI, deviceValidation} from "../../models/Device";
 import {ServiceResponse} from "../../common/models/serviceResponse";
 import {handleServiceResponse} from "../../common/utils/httpHandlers";
 import {validateBody} from "../../common/middleware/validateBody";
-import Token from "../../models/Token";
 import tokenService from "../../services/tokenService";
 import bot from "../../bot";
 
@@ -25,11 +24,9 @@ authRouter.post("/token/generate", validateBody(deviceValidation), async (req, r
     }
 })
 
-authRouter.get("/token/:token", async (req, res) => {
+authRouter.get<{ token: string }>("/token/:token", async (req, res) => {
     try {
-        const token = await Token.findOne({token: req.params.token})
-            .populate("device")
-            .populate("user");
+        const token = await tokenService.getToken(req.params.token)
         if (!token) {
             return handleServiceResponse(ServiceResponse.failure("Token not found"), res)
         }
