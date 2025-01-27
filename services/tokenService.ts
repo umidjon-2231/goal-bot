@@ -56,6 +56,9 @@ const getToken = async (tokenId: string): Promise<AuthInfo | null> => {
         searchParams = {_id: tokenId}
     }
     const findOne = await Token.findOne(searchParams);
+    if (!findOne) {
+        return null;
+    }
     const [device, client] = await Promise.all([
         Device.findById(findOne?.device),
         Client.findById(findOne?.client),
