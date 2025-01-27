@@ -50,7 +50,7 @@ const getGoalByNameAndChatId = async (name: string, chatId: string | number) => 
 }
 
 
-const getGoalById = async (goalId: mongoose.Types.ObjectId) => {
+const getGoalById = async (goalId: mongoose.Types.ObjectId): Promise<GoalI> => {
     return Goal.findById(goalId);
 }
 

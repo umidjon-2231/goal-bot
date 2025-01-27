@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import {z} from "zod";
 
 export interface GoalI {
     _id: mongoose.Types.ObjectId,
@@ -33,6 +34,11 @@ const scheme = new mongoose.Schema<GoalI>({
     }
 }, {
     validateBeforeSave: true,
+})
+
+export const goalValidation = z.object({
+    name: z.string().min(1),
+    chatId: z.number().int(),
 })
 
 export default mongoose.models.Goal || mongoose.model('Goal', scheme)
