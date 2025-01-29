@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 export interface ClientI {
+    _id: mongoose.Types.ObjectId
     username: string
     fullName: string,
     chatId: number,

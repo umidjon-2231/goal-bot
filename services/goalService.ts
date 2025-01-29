@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import Goal, {GoalI} from "../models/Goal";
 import {getTime} from "./timeService";
 import {escapeRegex} from "./utils";
+import Count from "../models/Count";
 
 const getAllGoalByChatId = async (chatId: string | number) => {
     return Goal.find<GoalI>({chatId});
@@ -70,6 +71,41 @@ export const getChatsNotificationOn = async () => {
 
 }
 
+export const getChats = (clientId: mongoose.Types.ObjectId) => {
+    return Count.aggregate<{chatId: number}>([
+        {
+            $match: {
+                // client: ObjectId('65e8cbfac3e82465e93d1276')
+                client: clientId
+            }
+        },
+        {
+            $lookup: {
+                from: "goals",
+                localField: "goal",
+                foreignField: "_id",
+                as: "goal_details"
+            }
+        },
+        {
+            $unwind: "$goal_details"
+        },
+        {
+            $group: {
+                _id: "$goal_details.chatId",
+            }
+        },
+        {
+            $replaceRoot: {
+                newRoot: {
+                    chatId: "$_id"
+                }
+            }
+        }
+
+    ]);
+}
+
 export default {
     getGoalById,
     addGoal,
@@ -79,4 +115,5 @@ export default {
     getGoalByNameAndChatId,
     getOldestGoalOfChat,
     getGoalsNotificationOn: getChatsNotificationOn,
+    getChats,
 }

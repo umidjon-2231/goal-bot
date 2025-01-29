@@ -2,15 +2,24 @@ import {ServiceResponse} from "../models/serviceResponse";
 import {RequestHandler, Request} from "express";
 import tokenService from "../../services/tokenService";
 import bot from "../../bot";
+import {handleServiceResponse} from "../utils/httpHandlers";
 
 
 export const checkChatAccess = async (req: Request, chatId: string) => {
-    if (req.auth.client.chatId !== parseInt(chatId)) {
-        let chatMember = await bot.getChatMember(chatId, req.auth.client.chatId);
-        console.log(chatMember)
-        if (!chatMember || !["creator", "administrator", "member"].includes(chatMember.status)) {
-            throw `You don't have access to chat ${chatId}`;
+    if (!chatId || isNaN(parseInt(chatId))){
+        throw "Invalid chat id"
+    }
+    try {
+        if (req.auth.client.chatId !== parseInt(chatId)) {
+            let chatMember = await bot.getChatMember(chatId, req.auth.client.chatId)
+                .catch(() => null);
+            console.log(chatMember)
+            if (!chatMember || !["creator", "administrator", "member"].includes(chatMember.status)) {
+                throw null;
+            }
         }
+    }catch (e) {
+        throw `You don't have access to chat ${chatId}`;
     }
 }
 

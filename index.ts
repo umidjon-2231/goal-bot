@@ -14,6 +14,7 @@ import {telegramBotRouter} from "./routes/bot/telegramBotRouter";
 import {authRouter} from "./routes/auth/authRouter";
 import {goalRouter} from "./routes/goal/goalRouter";
 import {auth} from "./common/middleware/auth";
+import {chatRouter} from "./routes/chat/chatRouter";
 
 
 dotenv.config()
@@ -38,6 +39,7 @@ app.use("/api/health-check", healthCheckRouter);
 app.use("/api/bot", telegramBotRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/goal", auth, goalRouter)
+app.use("/api/chat", auth, chatRouter)
 
 // Error handlers
 app.use(errorHandler());
