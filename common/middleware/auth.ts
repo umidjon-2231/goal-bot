@@ -1,12 +1,11 @@
 import {ServiceResponse} from "../models/serviceResponse";
-import {RequestHandler, Request} from "express";
+import {Request, RequestHandler} from "express";
 import tokenService from "../../services/tokenService";
 import bot from "../../bot";
-import {handleServiceResponse} from "../utils/httpHandlers";
 
 
 export const checkChatAccess = async (req: Request, chatId: string) => {
-    if (!chatId || isNaN(parseInt(chatId))){
+    if (!chatId || isNaN(parseInt(chatId))) {
         throw "Invalid chat id"
     }
     try {
@@ -18,14 +17,14 @@ export const checkChatAccess = async (req: Request, chatId: string) => {
                 throw null;
             }
         }
-    }catch (e) {
+    } catch (e) {
         throw `You don't have access to chat ${chatId}`;
     }
 }
 
 export const auth: RequestHandler = async (req, res, next) => {
     try {
-        const token = req.header("Authorization")?.replace("Bearer ", "");
+        let token = req.header("Authorization")?.replace("Bearer ", "");
         if (!token) {
             throw {message: "No token provided"};
         }

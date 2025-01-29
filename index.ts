@@ -39,7 +39,7 @@ app.use("/api/health-check", healthCheckRouter);
 app.use("/api/bot", telegramBotRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/goal", auth, goalRouter)
-app.use("/api/chat", auth, chatRouter)
+app.use("/api/chat", chatRouter)
 
 // Error handlers
 app.use(errorHandler());
