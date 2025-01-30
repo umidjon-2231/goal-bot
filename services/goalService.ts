@@ -10,7 +10,7 @@ const getAllGoalByChatId = async (chatId: string | number) => {
 }
 
 const getOldestGoalOfChat = async (chatId: string | number) => {
-    let {_id} = await Goal.findOne({chatId}, {sort: {createdTime: 1}});
+    const {_id} = await Goal.findOne({chatId}, {sort: {createdTime: 1}});
     return Goal.findById<GoalI>(_id);
 }
 
@@ -51,7 +51,7 @@ const getGoalByNameAndChatId = async (name: string, chatId: string | number) => 
 }
 
 
-const getGoalById = async (goalId: mongoose.Types.ObjectId): Promise<GoalI> => {
+const getGoalById = async (goalId: mongoose.Types.ObjectId): Promise<GoalI | null> => {
     return Goal.findById(goalId);
 }
 

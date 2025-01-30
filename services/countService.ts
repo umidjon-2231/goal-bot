@@ -1,6 +1,6 @@
 import goalService from "./goalService";
 import clientService from "./clientService";
-import Count from "../models/Count";
+import Count, {CountI} from "../models/Count";
 import {GoalI} from "../models/Goal";
 import {getTime} from "./timeService";
 import mongoose from "mongoose";
@@ -8,7 +8,7 @@ import {CountRank} from "./rankService";
 import {bold, uppercaseStart} from "./utils";
 
 
-const addCount = async (goalId: mongoose.Types.ObjectId, fromId: string | number, amount = 0) => {
+const addCount = async (goalId: mongoose.Types.ObjectId, fromId: string | number, amount = 0): Promise<CountI> => {
     if (amount <= 0) {
         throw new Error("Amount cannot be less or equal to zero")
     }
@@ -113,7 +113,7 @@ const getCountByClientIdAndTime = async (goalId: mongoose.Types.ObjectId, fromId
     if (!client) {
         throw new Error("Not registered")
     }
-    let count = await Count.aggregate([
+    let count = await Count.aggregate<{ totalAmount: number }>([
         {
             $match: {
                 goal: goal._id,
@@ -127,7 +127,6 @@ const getCountByClientIdAndTime = async (goalId: mongoose.Types.ObjectId, fromId
         {
             $group: {
                 _id: null,
-
                 totalAmount: {$sum: '$amount'}
             }
         }]);
@@ -136,9 +135,96 @@ const getCountByClientIdAndTime = async (goalId: mongoose.Types.ObjectId, fromId
 }
 
 
-
 const printCount = (goal: GoalI, amount: number) => {
     return `${uppercaseStart(goal.name)} - ${bold(amount.toString())}`
+}
+
+
+export interface CountsHistory {
+    day: string,
+    totalAmount: number,
+    goals: {
+        goal: GoalI,
+        counts: {_id: string, amount: number, createdTime: Date}[]
+    }
+}
+const getCountsHistory = async (clientId: number, chatId: string, page: number = 1) => {
+    const LIMIT = 10;
+    let client = await clientService.getClientByChatId(clientId);
+    if (!client) {
+        throw new Error("Not registered")
+    }
+
+
+
+    return Count.aggregate<CountsHistory>([
+        {
+            $match: {
+                client: client._id
+            }
+        },
+        { $sort: { createdTime: -1 } },
+        {
+            $group: {
+                _id: {
+                    day: { $dateToString: { format: "%Y-%m-%d", date: "$createdTime" } },
+                    goalId: "$goal",
+                },
+                totalAmount: { $sum: "$amount" },
+                counts: {
+                    $push: {
+                        _id: "$_id",
+                        amount: "$amount",
+                        createdTime: "$createdTime",
+                    }
+                }
+            }
+        },
+        {
+            $lookup: {
+                from: "goals",
+                localField: "_id.goalId",
+                foreignField: "_id",
+                as: "goal_details"
+            }
+        },
+        {
+            $unwind: { path: "$goal_details", preserveNullAndEmptyArrays: true }
+        },
+        {
+            $match: {
+                "goal_details.chatId": parseInt(chatId)
+            }
+        },
+        // Step 5: Reshape Data to Group by Day First, then Goals
+        {
+            $group: {
+                _id: "$_id.day",
+                totalAmount: { $sum: "$totalAmount" },
+                goals: {
+                    $push: {
+                        goal: "$goal_details",
+                        totalAmount: "$totalAmount",
+                        counts: "$counts"
+                    }
+                }
+            }
+        },
+        { $skip: (page - 1) * LIMIT },
+        { $limit: LIMIT },
+        {
+            $sort: { "_id": -1 }
+        },
+        {
+            $replaceRoot: {
+                newRoot: {
+                    day: "$_id",
+                    totalAmount: "$totalAmount",
+                    goals: "$goals",
+                }
+            }
+        }
+    ])
 }
 
 
@@ -162,5 +248,6 @@ export default {
     printCount,
     getCountByClientIdAndTime,
     getCountByGoal,
-    reactionForCount
+    reactionForCount,
+    getCountsHistory,
 }

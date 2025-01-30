@@ -6,7 +6,6 @@ import mongoose from "mongoose";
 import {validateBody} from "../../common/middleware/validateBody";
 import {goalValidation} from "../../models/Goal";
 import {checkChatAccess} from "../../common/middleware/auth";
-import bot from "../../bot";
 
 
 export const goalRouter: Router = express.Router();

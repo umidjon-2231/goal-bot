@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import {z} from "zod";
 
 export interface CountI {
     amount: number
@@ -29,5 +30,13 @@ const scheme = new mongoose.Schema<CountI>({
 }, {
     validateBeforeSave: true,
 })
+
+
+export const CountValidation = z.object({
+    amount: z.number().positive(),
+    goalId: z.string().nonempty(),
+}).strict().required()
+
+export type CountValidationType = z.infer<typeof CountValidation>
 
 export default mongoose.models.Count || mongoose.model('Count', scheme)

@@ -4,7 +4,7 @@ import tokenService from "../../services/tokenService";
 import bot from "../../bot";
 
 
-export const checkChatAccess = async (req: Request, chatId: string) => {
+export const checkChatAccess = async (req: Request<any, any, any, any>, chatId: string) => {
     if (!chatId || isNaN(parseInt(chatId))) {
         throw "Invalid chat id"
     }
