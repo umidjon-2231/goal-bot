@@ -16,6 +16,8 @@ import {goalRouter} from "./routes/goal/goalRouter";
 import {auth} from "./common/middleware/auth";
 import {chatRouter} from "./routes/chat/chatRouter";
 import {countRouter} from "./routes/count/countRouter";
+import {rankRouter} from "./routes/count/rankRouter";
+import {statisticRouter} from "./routes/count/statisticRouter";
 
 
 dotenv.config()
@@ -42,6 +44,8 @@ app.use("/api/auth", authRouter);
 app.use("/api/goal", auth, goalRouter)
 app.use("/api/chat", chatRouter)
 app.use("/api/count", auth, countRouter)
+app.use("/api/rank", auth, rankRouter)
+app.use("/api/statistic", auth, statisticRouter)
 
 // Error handlers
 app.use(errorHandler());

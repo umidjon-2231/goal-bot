@@ -2,17 +2,17 @@ import TelegramBot from "node-telegram-bot-api";
 import clientService from "./services/clientService";
 import goalService from "./services/goalService";
 import countService from "./services/countService";
-import {getStatistics, responsePeriodParser} from "./services/statisticService";
-import {parseDate, Period} from "./services/timeService";
+import {getStatistics} from "./services/statisticService";
+import {parseDate, Period, responsePeriodParser} from "./services/timeService";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import {bold, italic, periodButton, uppercaseStart, userUrl} from "./services/utils";
-import {getTop, parseRankResult} from "./services/rankService";
 import {notificationMessage, turnNotification} from "./services/notificationService";
 import {getQuoteOfDay, getRecommendation} from "./services/aiService";
 import axios from "axios";
 import streakService from "./services/streakService";
 import tokenService from "./services/tokenService";
+import rankService from "./services/rankService";
 
 dotenv.config()
 
@@ -48,7 +48,7 @@ bot.on("callback_query", async (query) => {
         switch (fields[0]) {
             case "cancel": {
                 let fromId = query.message.reply_to_message?.from?.id
-                if (typeof fromId!=="undefined" && fromId !== query.from.id) {
+                if (typeof fromId !== "undefined" && fromId !== query.from.id) {
                     await bot.answerCallbackQuery(query.id, {
                         text: "It is not your button!",
                         show_alert: true,
@@ -105,7 +105,7 @@ bot.on("callback_query", async (query) => {
                 let from = query.message!.reply_to_message!.from;
                 let minus = parseInt(fields[2]) || 0;
                 let period = fields[1] as Period;
-                let statistics = await getStatistics(query.message!.chat.id, from!, period, minus);
+                let statistics = await getStatistics(query.message!.chat.id, from!.id, period, minus);
                 let response = `Statistics of ${userUrl(from!.id, from!.first_name)} for ${responsePeriodParser(period, minus)}:\n\n`;
                 for (let i = 0; i < statistics.length; i++) {
                     let statistic = statistics[i];
@@ -128,10 +128,10 @@ bot.on("callback_query", async (query) => {
                     maxRank = 10;
                 }
                 let minus = parseInt(fields[3]) || 0;
-                let tops = await getTop(query.message.chat.id, maxRank, period, minus);
+                let tops = await rankService.getTop(query.message.chat.id, maxRank, period, minus);
                 let response = `${bold("Top " + maxRank)} for ${bold(responsePeriodParser(period, minus))}:\n\n`;
                 for (let o of tops) {
-                    response += `${bold(uppercaseStart(o.goal.name))}:\n${parseRankResult(o.counts)}\n`;
+                    response += `${bold(uppercaseStart(o.goal.name))}:\n${rankService.parseRankResult(o.ranks)}\n`;
                 }
                 await bot.sendMessage(query.message!.chat.id, response, {
                     parse_mode: "HTML",
@@ -172,7 +172,7 @@ bot.on("callback_query", async (query) => {
                 }
                 try {
                     await tokenService.verifyToken(tokenInfo._id, query.from.id);
-                }catch (e) {
+                } catch (e) {
                     await bot.answerCallbackQuery(query.id, {
                         text: e.error,
                         show_alert: true,
@@ -183,7 +183,7 @@ bot.on("callback_query", async (query) => {
                     text: "Token verified!!!",
                     show_alert: true,
                 })
-                await bot.editMessageText(`You are successfully logged in device:\n\n${bold(tokenInfo.device.brand+" "+ tokenInfo.device.model)} as ${userUrl(query.from.id, query.from.first_name)}`, {
+                await bot.editMessageText(`You are successfully logged in device:\n\n${bold(tokenInfo.device.brand + " " + tokenInfo.device.model)} as ${userUrl(query.from.id, query.from.first_name)}`, {
                     message_id: query.message!.message_id,
                     chat_id: query.message!.chat.id,
                     parse_mode: "HTML",
@@ -214,8 +214,8 @@ bot.onText(/\/start/, async (msg) => {
             }
             if (msg.text.startsWith("/start ")) {
                 const token = msg.text.split(" ")[1];
-                const tokenInfo=await tokenService.getToken(token)
-                await bot.sendMessage(chatId, `You are trying to login in device:\n\n${bold(tokenInfo.device.brand+" "+ tokenInfo.device.model)} as ${userUrl(chatId, msg.from!.first_name)}\n\nPlease confirm it!`, {
+                const tokenInfo = await tokenService.getToken(token)
+                await bot.sendMessage(chatId, `You are trying to login in device:\n\n${bold(tokenInfo.device.brand + " " + tokenInfo.device.model)} as ${userUrl(chatId, msg.from!.first_name)}\n\nPlease confirm it!`, {
                     reply_markup: {
                         inline_keyboard: [[
                             {text: "Cancel ❌", callback_data: "cancel"},

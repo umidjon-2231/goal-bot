@@ -1,6 +1,5 @@
 import TelegramBot from "node-telegram-bot-api";
-import {responsePeriodParser} from "./statisticService";
-import {Period} from "./timeService";
+import {Period, responsePeriodParser} from "./timeService";
 
 export function escapeRegex(string: string) {
     return string.replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&');

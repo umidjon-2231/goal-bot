@@ -5,8 +5,8 @@ import {
     endOfWeek,
     endOfYear,
     format, getDaysInMonth,
-    getDaysInYear,
-    isThisYear,
+    getDaysInYear, isThisWeek,
+    isThisYear, isToday,
     startOfDay,
     startOfMonth,
     startOfWeek,
@@ -81,6 +81,35 @@ export const periodToStartAndEndDate = (period: Period, minus = 0, goalCreatedTi
     }
 }
 
+export const responsePeriodParser = (period: Period, minus: number): string => {
+    let {end, start} = periodToStartAndEndDate(period, minus);
+    switch (period) {
+        case "year":
+            if (isThisYear(start)) {
+                return "this year"
+            }
+            return start.getFullYear().toString();
+        case "month":
+            return format(start, `MMMM${isThisYear(start) ? "" : " yyyy"}`);
+        case "day":
+            if (isToday(start)) {
+                return "today";
+            }
+            return parseDate(start);
+        case "week":
+            if (isThisWeek(start)) {
+                return "this week";
+            }
+            break;
+        case "today":
+            return "today";
+        case "allTime":
+            return "all time";
+    }
+    return `${parseDate(start)} to ${parseDate(end)}`
+}
+
+
 
 export const parseDate = (date: Date) => {
     return format(date, `dd.MM${isThisYear(date) ? "" : ".yyyy"}`)
@@ -93,5 +122,6 @@ export default {
     getMonthStartAndEnd,
     getDayStartAndEnd,
     getWeekStartAndEnd,
-    periodToStartAndEndDate
+    periodToStartAndEndDate,
+    responsePeriodParser,
 }

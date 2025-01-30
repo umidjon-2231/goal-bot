@@ -13,7 +13,7 @@ import {checkChatAccess} from "../../common/middleware/auth";
 export const countRouter: Router = Router();
 
 
-countRouter.get<null, null, null, {page?: number, chatId: string}>("/", async (req, res) => {
+countRouter.get<null, null, null, { page?: number, chatId: string }>("/", async (req, res) => {
     try {
         const page = req.query.page ?? 1;
         const chatId = req.query.chatId;
@@ -26,7 +26,10 @@ countRouter.get<null, null, null, {page?: number, chatId: string}>("/", async (r
     }
 })
 
-countRouter.get<{ goalId: string }, null, null, { period?: Period, minus?: number }>("/total/:goalId", async (req, res) => {
+countRouter.get<{ goalId: string }, null, null, {
+    period?: Period,
+    minus?: number
+}>("/total/:goalId", async (req, res) => {
     try {
         const period = req.query.period ?? "day";
         const goalId = req.params.goalId;
@@ -34,7 +37,7 @@ countRouter.get<{ goalId: string }, null, null, { period?: Period, minus?: numbe
         if (!goal) {
             return handleServiceResponse(ServiceResponse.failure("Goal not found"), res);
         }
-        await checkChatAccess(req, goal.chatId+"");
+        await checkChatAccess(req, goal.chatId + "");
         const oldest = await goalService.getOldestGoalOfChat(goal.chatId);
         let {start, end} = timeService.periodToStartAndEndDate(period, req.query.minus ?? 0, oldest.createdTime);
         let count = await countService.getCountByClientIdAndTime(
@@ -61,7 +64,7 @@ countRouter.post<null, null, CountValidationType>("/", validateBody(CountValidat
         if (!goalDoc) {
             return handleServiceResponse(ServiceResponse.failure("Goal not found"), res);
         }
-        await checkChatAccess(req, goalDoc.chatId+"");
+        await checkChatAccess(req, goalDoc.chatId + "");
         const count = await countService.addCount(goalObjectId, req.auth.client.chatId, amount);
         return handleServiceResponse(ServiceResponse.success("Count added successfully", {count}), res);
     } catch (e) {

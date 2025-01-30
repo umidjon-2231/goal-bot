@@ -10,16 +10,16 @@ export interface CountRank {
     fullName: string,
 }
 
-export const getTop = async (chatId: string | number, maxRank: number, period: Period, minus: number = 0) => {
+const getTop = async (chatId: string | number, maxRank: number, period: Period, minus: number = 0) => {
     if (maxRank > 10 || maxRank < 1) {
         maxRank = 10;
     }
-    let result: { goal: GoalI, counts: CountRank[] }[] = []
+    let result: { goal: GoalI, ranks: CountRank[] }[] = []
     let [goals, oldestGoal] = await Promise.all([goalService.getAllGoalByChatId(chatId), goalService.getOldestGoalOfChat(chatId)]);
     let {end, start} = timeService.periodToStartAndEndDate(period, minus, oldestGoal.createdTime);
     for (let goal of goals) {
         let details = await countService.getCountByGoal(goal._id, maxRank, start, end);
-        result.push({goal, counts: details})
+        result.push({goal, ranks: details})
     }
     return result;
 }
@@ -27,17 +27,23 @@ export const getTop = async (chatId: string | number, maxRank: number, period: P
 const topStickers = [
     "🏆", "🥈", "🥉",
 ]
-export const parseRankResult = (counts: CountRank[]) => {
+const parseRankResult = (ranks: CountRank[]) => {
     let result = ""
-    if (counts.length === 1) {
-        let first = counts[0];
+    if (ranks.length === 1) {
+        let first = ranks[0];
         result = `${first.fullName} - ${bold(first.count.toString())} ${topStickers[0]}\n`
-    } else if (counts.length === 0) {
+    } else if (ranks.length === 0) {
         result = italic("No goal records found\n");
     } else {
-        counts.forEach((ranker, i) => {
+        ranks.forEach((ranker, i) => {
             result += `${i + 1}. ${userUrl(ranker.clientId, ranker.fullName)} - ${bold(ranker.count.toString())} ${topStickers[i] ?? ""}\n`
         })
     }
     return result;
+}
+
+
+export default {
+    getTop,
+    parseRankResult
 }
