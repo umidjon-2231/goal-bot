@@ -25,7 +25,6 @@ const getStreakByClientIdAndGoalId = async (fromId: string | number, goalId: mon
     }
     console.log(client, goal)
     let streak = await Count.aggregate<{
-        streaks: any[],
         longestStreak: { start: null | string, end: null | string, length: number },
         currentStreak: { start: string, length: number },
     }>([
@@ -162,7 +161,6 @@ const getStreakByClientIdAndGoalId = async (fromId: string | number, goalId: mon
         // Step 8: Find the longest streak and current streak
         {
             $project: {
-                streaks: 1,
                 longestStreak: {
                     $reduce: {
                         input: "$streaks",
@@ -223,7 +221,6 @@ const getStreakByClientIdAndGoalId = async (fromId: string | number, goalId: mon
                             ]
                         },
                         {
-
                             start: {
                                 $getField: {
                                     field: "start",
@@ -267,11 +264,19 @@ const getStreakByClientIdAndGoalId = async (fromId: string | number, goalId: mon
                     ]
                 }
             }
+        },
+        // Step 9: Replace the root with the streaks
+        {
+            $replaceRoot: {
+                newRoot: {
+                    longestStreak: "$longestStreak",
+                    currentStreak: "$currentStreak"
+                }
+            }
         }
     ]);
 
     return streak[0] ?? {
-        streaks: [],
         longestStreak: {start: "", end: "", length: 0},
         currentStreak: {start: "", length: 0}
     };

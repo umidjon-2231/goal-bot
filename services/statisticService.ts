@@ -1,7 +1,6 @@
 import countService from "./countService";
 import goalService from "./goalService";
 import timeService, {Period} from "./timeService";
-import TelegramBot from "node-telegram-bot-api";
 import {GoalI} from "../models/Goal";
 
 export const getStatistics = async (chatId: string | number, fromId: number, period: Period, minus: number) => {

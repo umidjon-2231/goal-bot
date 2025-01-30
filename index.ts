@@ -18,6 +18,7 @@ import {chatRouter} from "./routes/chat/chatRouter";
 import {countRouter} from "./routes/count/countRouter";
 import {rankRouter} from "./routes/count/rankRouter";
 import {statisticRouter} from "./routes/count/statisticRouter";
+import {streakRouter} from "./routes/count/streakRouter";
 
 
 dotenv.config()
@@ -46,6 +47,7 @@ app.use("/api/chat", chatRouter)
 app.use("/api/count", auth, countRouter)
 app.use("/api/rank", auth, rankRouter)
 app.use("/api/statistic", auth, statisticRouter)
+app.use("/api/streak", auth, streakRouter)
 
 // Error handlers
 app.use(errorHandler());

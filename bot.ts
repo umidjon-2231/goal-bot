@@ -82,7 +82,7 @@ bot.on("callback_query", async (query) => {
                 let goal = await goalService.getGoalById(goalId);
                 let count = await countService.addCount(goalId, fromId, amount);
                 if (count) {
-                    await bot.editMessageText(`${userUrl(query.from.id, query.from.first_name)}, new data recorded\n\n${goal.name} +${amount}`, {
+                    await bot.editMessageText(`${userUrl(query.from.id, query.from.first_name)}, new data recorded\n\n${uppercaseStart(goal.name)} +${amount}`, {
                         message_id: query.message!.message_id,
                         chat_id: query.message!.chat.id,
                         parse_mode: "HTML",

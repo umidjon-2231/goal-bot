@@ -8,6 +8,7 @@ import {Types} from "mongoose";
 import {validateBody} from "../../common/middleware/validateBody";
 import {CountValidation, CountValidationType} from "../../models/Count";
 import {checkChatAccess} from "../../common/middleware/auth";
+import {sendCountCreatedNotification, uppercaseStart} from "../../services/utils";
 
 
 export const countRouter: Router = Router();
@@ -66,6 +67,7 @@ countRouter.post<null, null, CountValidationType>("/", validateBody(CountValidat
         }
         await checkChatAccess(req, goalDoc.chatId + "");
         const count = await countService.addCount(goalObjectId, req.auth.client.chatId, amount);
+        await sendCountCreatedNotification(req.auth.client, goalDoc.chatId + "", uppercaseStart(goalDoc.name), amount);
         return handleServiceResponse(ServiceResponse.success("Count added successfully", {count}), res);
     } catch (e) {
         console.error(e);
