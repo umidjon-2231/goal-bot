@@ -113,7 +113,7 @@ export const responsePeriodParser = (period: Period, minus: number): string => {
 export const parsePeriodFromDate= (date: Date, period: Period) => {
     switch (period) {
         case "year":
-            return date.getFullYear();
+            return format(date, `yyyy`);
         case "month":
             return format(date, `MMMM${isThisYear(date) ? "" : " yyyy"}`);
         case "day":
