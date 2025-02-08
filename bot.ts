@@ -458,6 +458,10 @@ bot.onText(/^\/record/, async (msg) => {
             let history = await recordService.getRecordHistory(goal._id, msg.from!.id);
             response += `${bold(uppercaseStart(goal.name))}:\n`
             for (let key in history) {
+                if (history[key].totalAmount === 0 || !history[key].period) {
+                    response += `${uppercaseStart(key)}: No record\n`
+                    continue;
+                }
                 response += `${uppercaseStart(key)}: ${history[key].totalAmount} (${parsePeriodFromDate(history[key].period, key as Period)})\n`
             }
             response += "\n"
