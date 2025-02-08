@@ -3,16 +3,16 @@ import clientService from "./services/clientService";
 import goalService from "./services/goalService";
 import countService from "./services/countService";
 import {getStatistics} from "./services/statisticService";
-import {parseDate, Period, responsePeriodParser} from "./services/timeService";
+import {parseDate, parsePeriodFromDate, Period, responsePeriodParser} from "./services/timeService";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import {bold, italic, periodButton, uppercaseStart, userUrl} from "./services/utils";
-import {notificationMessage, turnNotification} from "./services/notificationService";
-import {getQuoteOfDay, getRecommendation} from "./services/aiService";
+import {turnNotification} from "./services/notificationService";
 import axios from "axios";
 import streakService from "./services/streakService";
 import tokenService from "./services/tokenService";
 import rankService from "./services/rankService";
+import recordService from "./services/recordService";
 
 dotenv.config()
 
@@ -205,7 +205,7 @@ bot.onText(/\/start/, async (msg) => {
             if (existById) {
                 await bot.sendMessage(chatId, `Hi ${msg.from!.first_name}. Nice to meet you again!`)
             } else {
-                existById = await clientService.addClient({
+                await clientService.addClient({
                     chatId,
                     fullName: msg.from!.first_name,
                     username: msg.from!.username || '',
@@ -445,6 +445,32 @@ bot.onText(/^\/missed/, async (msg) => {
     }
 })
 
+bot.onText(/^\/record/, async (msg) => {
+    try {
+        let chatId = msg.chat.id;
+        let goals = await goalService.getAllGoalByChatId(chatId);
+        if (goals.length === 0) {
+            await bot.sendMessage(chatId, "There no any goals!")
+            return;
+        }
+        let response = `Record history of ${userUrl(msg.from!.id, msg.from!.first_name)}:\n\n`
+        for (let goal of goals) {
+            let history = await recordService.getRecordHistory(goal._id, msg.from!.id);
+            response += `${bold(uppercaseStart(goal.name))}:\n`
+            for (let key in history) {
+                response += `${uppercaseStart(key)}: ${history[key].totalAmount} (${parsePeriodFromDate(history[key].period, key as Period)})\n`
+            }
+            response += "\n"
+        }
+        await bot.sendMessage(chatId, response, {
+            parse_mode: "HTML",
+            reply_to_message_id: msg.message_id,
+        })
+    } catch (e) {
+        console.error(e);
+    }
+})
+
 bot.onText(/^\/notification_(off|on)/, async (msg, match) => {
     if (msg.chat.type === "private") {
         return await bot.sendMessage(msg.chat.id, "Private chats don't support notification!")
@@ -458,24 +484,24 @@ bot.onText(/^\/notification_(off|on)/, async (msg, match) => {
         reply_to_message_id: msg.message_id
     })
 })
-
-
-bot.onText(/\/quote/, async (msg) => {
-    let quoteOfDay = await getQuoteOfDay();
-    return bot.sendMessage(msg.chat.id, quoteOfDay)
-})
-
-bot.onText(/\/rec/, async (msg) => {
-    let quoteOfDay = await getRecommendation(msg.chat.id, 3, "week");
-    const response = await notificationMessage(msg.chat.id, 3, "week")
-    let message = await bot.sendMessage(msg.chat.id, response, {
-        parse_mode: "HTML"
-    });
-    return bot.sendMessage(msg.chat.id, quoteOfDay, {
-        parse_mode: "Markdown",
-        reply_to_message_id: message.message_id,
-    })
-})
+//
+//
+// bot.onText(/\/quote/, async (msg) => {
+//     let quoteOfDay = await getQuoteOfDay();
+//     return bot.sendMessage(msg.chat.id, quoteOfDay)
+// })
+//
+// bot.onText(/\/rec/, async (msg) => {
+//     let quoteOfDay = await getRecommendation(msg.chat.id, 3, "week");
+//     const response = await notificationMessage(msg.chat.id, 3, "week")
+//     let message = await bot.sendMessage(msg.chat.id, response, {
+//         parse_mode: "HTML"
+//     });
+//     return bot.sendMessage(msg.chat.id, quoteOfDay, {
+//         parse_mode: "Markdown",
+//         reply_to_message_id: message.message_id,
+//     })
+// })
 
 
 export default bot;

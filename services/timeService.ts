@@ -110,6 +110,23 @@ export const responsePeriodParser = (period: Period, minus: number): string => {
 }
 
 
+export const parsePeriodFromDate= (date: Date, period: Period) => {
+    switch (period) {
+        case "year":
+            return date.getFullYear();
+        case "month":
+            return format(date, `MMMM${isThisYear(date) ? "" : " yyyy"}`);
+        case "day":
+            return format(date, `dd.MM${isThisYear(date) ? "" : ".yyyy"}`);
+        case "week":
+            return format(startOfWeek(date), `dd.MM`)+"-"+
+                format(endOfWeek(date), `dd.MM${isThisYear(date) ? "" : ".yyyy"}`);
+        default:
+            return parseDate(date);
+    }
+}
+
+
 
 export const parseDate = (date: Date) => {
     return format(date, `dd.MM${isThisYear(date) ? "" : ".yyyy"}`)
@@ -124,4 +141,5 @@ export default {
     getWeekStartAndEnd,
     periodToStartAndEndDate,
     responsePeriodParser,
+    parsePeriodFromDate,
 }
