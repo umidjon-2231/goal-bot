@@ -111,6 +111,7 @@ export const responsePeriodParser = (period: Period, minus: number): string => {
 
 
 export const parsePeriodFromDate= (date: Date, period: Period) => {
+    console.log(date);
     switch (period) {
         case "year":
             return format(date, `yyyy`);
